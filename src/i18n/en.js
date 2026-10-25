@@ -80,7 +80,10 @@ export default {
     emptyHint: 'Add a paraglider, reserve parachute or harness.',
     title: 'Equipment',
     nextInspection: 'Next inspection',
-    add: 'Add new equipment'
+    add: 'Add new equipment',
+    addExisting: 'Add existing equipment',
+    removeFromOrder: 'Remove from service order',
+    saveForReport: 'Save the order before uploading a report for this item.'
   },
   validation: {
     completeFields: 'Please complete the highlighted required fields.',
@@ -177,7 +180,11 @@ export default {
     paymentDetails: 'Enter a payment amount and date.',
     pdfRequired: 'Upload a PDF.',
     checkDetails: 'Please check the entered details.',
-    unavailable: 'The service is currently unavailable. Please try again.'
+    unavailable: 'The service is currently unavailable. Please try again.',
+    reportEquipment: 'Select equipment linked to this order.',
+    removeEquipmentReports: 'Remove the equipment reports before unlinking this item.',
+    equipmentCustomer: 'Selected equipment must belong to the customer of this order.',
+    invoiceExists: 'This order already has an invoice. Remove it before uploading another invoice.'
   },
   orders: {
     createInvoice: 'Create service invoice',
@@ -316,7 +323,13 @@ export default {
     type: 'Document type',
     reference: 'Report reference',
     choosePdf: 'Choose a PDF (up to 10 MB)',
-    upload: 'Upload document'
+    upload: 'Upload document',
+    equipmentReports: 'Equipment and reports',
+    addReport: 'Upload report for this item',
+    addInvoice: 'Upload order invoice',
+    noReport: 'No report uploaded yet.',
+    unassignedReports: 'Reports awaiting equipment assignment',
+    assignReport: 'Assign report to equipment'
   },
   finance: {
     agencyFee: 'Agency fee (€)',

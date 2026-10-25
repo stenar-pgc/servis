@@ -48,70 +48,6 @@
                 </q-item-section>
               </template>
               <div class="q-pa-lg">
-                <q-select
-                  v-if="session.user?.admin && !newCustomer"
-                  ref="equipmentSelect"
-                  v-model="form.equipment_id"
-                  outlined
-                  use-input
-                  fill-input
-                  hide-selected
-                  clearable
-                  :input-debounce="0"
-                  :options="filteredEquipmentOptions"
-                  emit-value
-                  map-options
-                  :label="$t('equipment.title')"
-                  :hint="$t('equipment.optional')"
-                  :disable="readonly"
-                  @filter="filterEquipment">
-                  <template #before-options>
-                    <q-item v-if="!readonly" clickable @click="addEquipment">
-                      <q-item-section avatar><q-icon name="add" color="primary" /></q-item-section>
-                      <q-item-section class="text-primary">{{ $t('equipment.add') }}</q-item-section>
-                    </q-item>
-                    <q-separator />
-                  </template>
-                  <template #no-option>
-                    <q-item>
-                      <q-item-section class="text-grey-7">
-                        {{ $t(equipment.length ? 'common.noResults' : 'equipment.noneRegistered') }}
-                      </q-item-section>
-                    </q-item>
-                    <q-item v-if="!readonly" clickable @click="addEquipment">
-                      <q-item-section avatar><q-icon name="add" color="primary" /></q-item-section>
-                      <q-item-section class="text-primary">{{ $t('equipment.add') }}</q-item-section>
-                    </q-item>
-                  </template>
-                </q-select>
-                <q-btn
-                  v-if="session.user?.admin && !newCustomer && form.equipment_id"
-                  flat
-                  dense
-                  no-caps
-                  color="primary"
-                  icon="edit"
-                  :label="$t('equipment.edit')"
-                  class="q-mt-sm q-mb-md"
-                  @click="editEquipment" />
-                <div v-if="session.user?.admin && newCustomer" class="form-grid q-mb-md">
-                  <q-select
-                    outlined
-                    dense
-                    v-model="guestEquipment.type"
-                    :options="equipmentTypes.map(value => ({ value, label: translateText(value) }))"
-                    emit-value
-                    map-options
-                    :label="$t('equipment.type')"
-                    class="wide" />
-                  <EquipmentModelFields
-                    v-model:manufacturer="guestEquipment.manufacturer"
-                    v-model:model="guestEquipment.model"
-                    :type="guestEquipment.type"
-                    :required="false" />
-                  <q-input outlined dense v-model="guestEquipment.size" :label="$t('equipment.size')" />
-                  <q-input outlined dense v-model="guestEquipment.serial" :label="$t('equipment.serial')" />
-                </div>
                 <q-input
                   outlined
                   v-model="form.description"
@@ -210,8 +146,7 @@
                     map-options
                     clearable
                     :label="$t('customers.customer')"
-                    :hint="$t('customers.assignLater')"
-                    @update:model-value="customerChanged" />
+                    :hint="$t('customers.assignLater')" />
                 </div>
                 <div v-else class="row items-center no-wrap">
                   <q-avatar icon="person_outline" color="grey-2" text-color="primary" class="q-mr-md" />
@@ -308,14 +243,6 @@
                 emit-value
                 map-options
                 :label="$t('orders.status')" />
-              <q-btn
-                v-if="editing"
-                outline
-                no-caps
-                icon="note_add"
-                :label="$t('orders.createInvoice')"
-                disable
-                class="full-width q-mt-md" />
               <q-expansion-item
                 icon="account_balance_wallet"
                 v-if="editing"
@@ -370,83 +297,151 @@
               </q-expansion-item>
             </q-card>
           </template>
-          <q-card v-if="!isNew && (!session.user?.admin || editing)" flat bordered class="section-card">
-            <h2 class="q-mb-lg">{{ $t('documents.title') }}</h2>
-            <div v-if="!documents.length" class="text-grey-6 q-mb-md">
-              {{ $t('documents.empty') }}
-            </div>
-            <div v-for="group in documentGroups" :key="group.key" class="service-item q-mb-md">
-              <div class="text-weight-medium">
-                {{ $t(group.kind === 'report' ? 'documents.serviceReport' : 'documents.invoice') }}
-                {{ group.report_number }}
-              </div>
-              <div v-if="group.equipment_label" class="text-caption text-grey-7 q-mt-xs">
-                {{ group.equipment_label }} · {{ group.serial }}
-              </div>
-              <div v-for="doc in group.files" :key="doc.id" class="row items-center no-wrap q-mt-sm">
-                <q-icon name="picture_as_pdf" color="primary" size="24px" class="q-mr-md" />
-                <div class="col ellipsis">{{ doc.filename }}</div>
-                <q-btn flat round dense icon="download" :aria-label="$t('documents.download')" @click="download(doc)" />
-                <q-btn
-                  v-if="session.user?.admin"
-                  flat
-                  round
-                  dense
-                  icon="close"
-                  :aria-label="$t('documents.remove')"
-                  @click="removeDocument(doc)" />
-              </div>
-            </div>
-            <template v-if="session.user?.admin">
-              <q-separator class="q-my-md" />
-              <div class="form-grid">
-                <q-select
-                  outlined
-                  dense
-                  v-model="uploadKind"
-                  :options="[
-                    { value: 'report', label: $t('documents.serviceReport') },
-                    { value: 'invoice', label: $t('documents.invoice') }
-                  ]"
-                  emit-value
-                  map-options
-                  :label="$t('documents.type')" />
-                <q-input outlined dense v-model="reportNumber" :label="$t('documents.reference')" />
-                <q-input
-                  v-if="uploadKind === 'report'"
-                  outlined
-                  dense
-                  v-model="reportEquipment"
-                  :label="$t('documents.equipmentLabel')" />
-                <q-input
-                  v-if="uploadKind === 'report'"
-                  outlined
-                  dense
-                  v-model="reportSerial"
-                  :label="$t('equipment.serial')" />
-                <q-file
-                  outlined
-                  dense
-                  v-model="uploadFile"
-                  accept="application/pdf,.pdf"
-                  :max-file-size="10485760"
-                  :label="$t('documents.choosePdf')"
-                  class="wide"
-                  clearable
-                  @rejected="documentError = t('errors.pdfSize')" />
-              </div>
-              <ErrorBanner :message="documentError" class="q-mt-md" />
+          <q-card
+            v-if="session.user?.admin || (!isNew && (orderEquipment.length || unassignedReports.length))"
+            flat
+            bordered
+            class="section-card">
+            <h2 class="q-mb-lg">{{ $t('documents.equipmentReports') }} ({{ orderEquipment.length }})</h2>
+            <div v-if="session.user?.admin" class="q-mb-lg">
+              <q-select
+                ref="equipmentSelect"
+                v-model="equipmentToAdd"
+                outlined
+                use-input
+                clearable
+                :input-debounce="0"
+                :options="filteredEquipmentOptions"
+                emit-value
+                map-options
+                :label="$t('equipment.addExisting')"
+                @filter="filterEquipment"
+                @update:model-value="attachEquipment">
+                <template #no-option>
+                  <q-item>
+                    <q-item-section>{{ $t('common.noResults') }}</q-item-section>
+                  </q-item>
+                </template>
+              </q-select>
               <q-btn
                 outline
                 no-caps
                 color="primary"
+                icon="add"
+                :label="$t('equipment.new')"
+                class="q-mt-md"
+                @click="addEquipment" />
+            </div>
+            <div v-if="!orderEquipment.length" class="text-grey-7">{{ $t('equipment.noneRegistered') }}</div>
+            <div v-for="item in orderEquipment" :key="item.id" class="service-item q-mb-md">
+              <div class="row items-start">
+                <div class="col">
+                  <strong>{{ equipmentLabel(item) }}</strong>
+                  <div class="text-caption text-grey-7">{{ translateText(item.type) }} · {{ item.serial || '—' }}</div>
+                </div>
+                <template v-if="session.user?.admin">
+                  <q-btn
+                    flat
+                    round
+                    dense
+                    icon="edit"
+                    color="primary"
+                    :aria-label="$t('equipment.edit')"
+                    @click="editEquipment(item)" />
+                  <q-btn
+                    flat
+                    round
+                    dense
+                    icon="close"
+                    :aria-label="$t('equipment.removeFromOrder')"
+                    :disable="reportsFor(item.id).length > 0"
+                    @click="detachEquipment(item.id)">
+                    <q-tooltip v-if="reportsFor(item.id).length">{{ $t('errors.removeEquipmentReports') }}</q-tooltip>
+                  </q-btn>
+                </template>
+              </div>
+              <DocumentFiles
+                :files="reportsFor(item.id)"
+                :editable="session.user?.admin"
+                @download="download"
+                @remove="removeDocument" />
+              <div v-if="!reportsFor(item.id).length" class="text-caption text-grey-7 q-mt-md">
+                {{ $t('documents.noReport') }}
+              </div>
+              <q-btn
+                v-if="session.user?.admin"
+                flat
+                no-caps
+                color="primary"
                 icon="upload_file"
-                :label="$t('documents.upload')"
-                :disable="!uploadFile"
-                :loading="uploading"
-                @click="upload"
-                class="q-mt-md" />
+                :label="$t('documents.addReport')"
+                :disable="isNew || !savedEquipmentIds.includes(Number(item.id))"
+                class="q-mt-sm"
+                @click="openUpload('report', item.id)" />
+              <div
+                v-if="session.user?.admin && (isNew || !savedEquipmentIds.includes(Number(item.id)))"
+                class="text-caption text-grey-7">
+                {{ $t('equipment.saveForReport') }}
+              </div>
+            </div>
+            <template v-if="unassignedReports.length">
+              <h3 class="text-subtitle1">{{ $t('documents.unassignedReports') }}</h3>
+              <div v-for="doc in unassignedReports" :key="doc.id" class="q-mb-md">
+                <div class="text-caption text-grey-7">{{ doc.equipment_label }} {{ doc.serial }}</div>
+                <DocumentFiles
+                  :files="[doc]"
+                  :editable="session.user?.admin"
+                  @download="download"
+                  @remove="removeDocument" />
+                <div v-if="session.user?.admin" class="row items-center q-col-gutter-sm q-mt-xs">
+                  <q-select
+                    outlined
+                    dense
+                    v-model="reportAssignments[doc.id]"
+                    :options="savedEquipmentOptions"
+                    emit-value
+                    map-options
+                    :label="$t('documents.assignReport')"
+                    class="col" />
+                  <q-btn
+                    flat
+                    no-caps
+                    color="primary"
+                    :label="$t('common.save')"
+                    :disable="!reportAssignments[doc.id]"
+                    @click="assignReport(doc)" />
+                </div>
+              </div>
             </template>
+            <ErrorBanner :message="documentError" class="q-mt-md" />
+          </q-card>
+          <q-card v-if="!isNew && (session.user?.admin || invoices.length)" flat bordered class="section-card">
+            <h2>{{ $t('documents.invoice') }}</h2>
+            <DocumentFiles
+              :files="invoices"
+              :editable="session.user?.admin"
+              @download="download"
+              @remove="removeDocument" />
+            <div v-if="!invoices.length" class="text-grey-7 q-mt-md">{{ $t('documents.empty') }}</div>
+            <q-btn
+              v-if="session.user?.admin && !invoices.length"
+              outline
+              no-caps
+              color="primary"
+              icon="upload_file"
+              :label="$t('documents.addInvoice')"
+              class="q-mt-md"
+              @click="openUpload('invoice')" />
+            <q-btn
+              v-if="session.user?.admin && editing"
+              outline
+              no-caps
+              icon="note_add"
+              :label="$t('orders.createInvoice')"
+              disable
+              class="full-width q-mt-md" />
+          </q-card>
+          <q-card v-if="session.user?.admin && documents.length" flat bordered class="section-card">
             <q-expansion-item
               v-if="session.user?.admin && documents.length"
               icon="mail_outline"
@@ -537,7 +532,7 @@
             <div>{{ publicMode ? contact.first + ' ' + contact.last : owner?.name }}</div>
             <div>{{ publicMode ? contact.mail : owner?.mail }}</div>
             <div>
-              {{ publicMode ? guestEquipment.manufacturer + ' ' + guestEquipment.model : equipmentOptions.find(e => e.value === form.equipment_id)?.label }}
+              {{ orderEquipment.map(equipmentLabel).join(', ') || $t('equipment.unassigned') }}
             </div>
             <p class="q-mb-none q-mt-sm">{{ form.description }}</p>
           </div>
@@ -558,12 +553,46 @@
         </q-card>
       </div>
     </q-form>
+    <q-dialog v-model="documentEditor">
+      <q-card class="editor">
+        <q-card-section class="row items-center">
+          <h2>{{ $t(uploadKind === 'report' ? 'documents.addReport' : 'documents.addInvoice') }}</h2>
+          <q-space />
+          <q-btn flat round dense icon="close" v-close-popup :aria-label="$t('common.close')" />
+        </q-card-section>
+        <q-card-section class="q-gutter-md">
+          <div v-if="uploadKind === 'report'" class="text-weight-medium">{{ equipmentLabel(uploadEquipment) }}</div>
+          <q-input v-if="uploadKind === 'report'" outlined v-model="reportNumber" :label="$t('documents.reference')" />
+          <q-file
+            outlined
+            v-model="uploadFile"
+            accept="application/pdf,.pdf"
+            :max-file-size="10485760"
+            :label="$t('documents.choosePdf')"
+            clearable
+            @rejected="documentError = t('errors.pdfSize')" />
+          <ErrorBanner :message="documentError" />
+        </q-card-section>
+        <q-card-actions align="right" class="q-pa-md">
+          <q-btn flat no-caps :label="$t('common.cancel')" v-close-popup />
+          <q-btn
+            unelevated
+            no-caps
+            color="primary"
+            icon="upload_file"
+            :label="$t('documents.upload')"
+            :disable="!uploadFile"
+            :loading="uploading"
+            @click="upload" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
     <EquipmentEditor
       v-if="!publicMode"
       v-model="equipmentEditor"
       :customers="customers"
       :equipment="equipmentToEdit"
-      :customer-id="customerId"
+      :customer-id="newCustomer ? null : customerId"
       @saved="equipmentSaved" />
   </q-page>
 </template>
@@ -576,7 +605,6 @@
     api,
     date,
     deliveries,
-    equipmentTypes,
     money,
     orderNumber,
     paymentMethods,
@@ -586,7 +614,7 @@
   import { t, i18n, translateText } from '../i18n'
   import ErrorBanner from '../components/ErrorBanner.vue'
   import EquipmentEditor from '../components/EquipmentEditor.vue'
-  import EquipmentModelFields from '../components/EquipmentModelFields.vue'
+  import DocumentFiles from '../components/DocumentFiles.vue'
   import StatusBadge from '../components/StatusBadge.vue'
   import ServiceSelector from '../components/ServiceSelector.vue'
   const route = useRoute(),
@@ -598,7 +626,7 @@
   const readonly = !isNew && !session.user?.admin
   const form = reactive({
     id: null,
-    equipment_id: null,
+    equipment_ids: [],
     description: '',
     status: 'submitted',
     delivery: 'personal',
@@ -637,23 +665,33 @@
   const customerId = ref(null)
   const newContact = reactive({ name: '', mail: '', phone: '', address: '' })
   const contact = reactive({ first: '', last: '', mail: '', phone: '', create_account: true })
-  const guestEquipment = reactive({ type: 'Jadralno padalo', manufacturer: '', model: '', size: '', serial: '' })
   const submitted = ref(null)
   const activationSent = ref(true)
   const hasDiscount = ref(false)
   const review = ref(false)
   const agencies = ref([])
-  const reportEquipment = ref('')
-  const reportSerial = ref('')
-  const documentGroups = computed(() => {
-    const groups = new Map()
-    for (const doc of documents.value) {
-      const key = `${doc.kind}:${doc.report_number || doc.id}:${doc.equipment_label || ''}:${doc.serial || ''}`
-      if (!groups.has(key)) groups.set(key, { ...doc, key, files: [] })
-      groups.get(key).files.push(doc)
-    }
-    return [...groups.values()]
-  })
+  const equipmentToAdd = ref(null)
+  const documentEditor = ref(false)
+  const reportEquipmentId = ref(null)
+  const savedEquipmentIds = ref([])
+  const reportAssignments = reactive({})
+  const orderEquipment = computed(() =>
+    form.equipment_ids.map(id => equipment.value.find(item => Number(item.id) === Number(id))).filter(Boolean)
+  )
+  const invoices = computed(() => documents.value.filter(doc => doc.kind === 'invoice'))
+  const unassignedReports = computed(() => documents.value.filter(doc => doc.kind === 'report' && !doc.equipment_id))
+  const uploadEquipment = computed(() =>
+    equipment.value.find(item => Number(item.id) === Number(reportEquipmentId.value))
+  )
+  const reportsFor = id =>
+    documents.value.filter(doc => doc.kind === 'report' && Number(doc.equipment_id) === Number(id))
+  const equipmentLabel = item =>
+    item ? `${item.manufacturer || ''} ${item.model || ''} ${item.size || ''}`.trim() || translateText(item.type) : ''
+  const savedEquipmentOptions = computed(() =>
+    orderEquipment.value
+      .filter(item => savedEquipmentIds.value.includes(Number(item.id)))
+      .map(item => ({ value: Number(item.id), label: equipmentLabel(item) }))
+  )
   const editing = computed(() => ['in_service', 'completed'].includes(form.status))
   const required = v => !!String(v || '').trim() || t('validation.required')
   const email = reactive({
@@ -666,7 +704,13 @@
     sending = ref(false)
   const equipmentOptions = computed(() =>
     equipment.value
-      .filter(e => !customerId.value || !e.customer_id || Number(e.customer_id) === Number(customerId.value))
+      .filter(
+        e =>
+          !form.equipment_ids.includes(Number(e.id)) &&
+          (newCustomer.value
+            ? !e.customer_id
+            : !customerId.value || !e.customer_id || Number(e.customer_id) === Number(customerId.value))
+      )
       .map(e => ({
         value: Number(e.id),
         label: `${e.manufacturer} ${e.model} ${e.size} · ${e.serial || ''}${session.user?.admin ? ' · ' + (e.customer_name || t('equipment.noOwner')) : ''}`
@@ -684,29 +728,34 @@
     })
   }
 
-  function customerChanged() {
-    const selected = equipment.value.find(item => Number(item.id) === Number(form.equipment_id))
-    if (selected?.customer_id && Number(selected.customer_id) !== Number(customerId.value)) form.equipment_id = null
+  function attachEquipment(id) {
+    if (!id) return
+    const item = equipment.value.find(item => Number(item.id) === Number(id))
+    if (!newCustomer.value && !customerId.value && item?.customer_id) customerId.value = Number(item.customer_id)
+    form.equipment_ids = [...new Set([...form.equipment_ids, Number(id)])]
+    equipmentToAdd.value = null
+    equipmentSearch.value = ''
+  }
+
+  function detachEquipment(id) {
+    form.equipment_ids = form.equipment_ids.filter(value => Number(value) !== Number(id))
   }
 
   function addEquipment() {
     equipmentToEdit.value = null
-    equipmentSelect.value.hidePopup()
+    equipmentSelect.value?.hidePopup()
     equipmentEditor.value = true
   }
 
-  function editEquipment() {
-    equipmentToEdit.value = equipment.value.find(item => Number(item.id) === Number(form.equipment_id))
+  function editEquipment(item) {
+    equipmentToEdit.value = item
     equipmentEditor.value = true
   }
 
   const owner = computed(
     () =>
-      customers.value.find(
-        c =>
-          Number(c.id) ===
-          Number(equipment.value.find(e => Number(e.id) === Number(form.equipment_id))?.customer_id || customerId.value)
-      ) || (!session.user?.admin ? session.user : null)
+      customers.value.find(item => Number(item.id) === Number(customerId.value)) ||
+      (!session.user?.admin ? session.user : null)
   )
   const translatedDeliveries = computed(() => deliveries.map(d => ({ ...d, label: t(d.label) })))
   const translatedPayments = computed(() => paymentMethods.map(p => ({ ...p, label: t(p.label) })))
@@ -740,18 +789,20 @@
       agencies.value = result[3]
       for (const item of catalog.value) form.quantities[item.code] = 0
       if (isNew) {
-        form.equipment_id = route.query.equipment ? Number(route.query.equipment) : null
-        customerId.value = equipment.value.find(e => Number(e.id) === form.equipment_id)?.customer_id || null
+        form.equipment_ids = route.query.equipment ? [Number(route.query.equipment)] : []
+        customerId.value = orderEquipment.value[0]?.customer_id || null
       } else {
         newCustomer.value = false
         const order = await api('order/' + route.params.id)
         Object.assign(form, order, {
-          equipment_id: order.equipment_id ? Number(order.equipment_id) : null,
+          equipment_ids: (order.equipment_ids || (order.equipment_id ? [order.equipment_id] : [])).map(Number),
           english_report: !!Number(order.english_report),
           finance_complete: !!Number(order.finance_complete),
           discount_code: ''
         })
         customerId.value = order.customer_id ? Number(order.customer_id) : null
+        savedEquipmentIds.value = [...form.equipment_ids]
+        if (!session.user?.admin && order.equipment) equipment.value = order.equipment
         acceptedPrices.value = {}
         for (const item of order.items) {
           form.quantities[item.service_code] = Number(item.quantity)
@@ -759,9 +810,6 @@
         }
         documents.value = order.documents
         comments.value = order.comments || []
-        const selected = equipment.value.find(e => Number(e.id) === Number(order.equipment_id))
-        reportEquipment.value = selected ? `${selected.manufacturer} ${selected.model} ${selected.size || ''}` : ''
-        reportSerial.value = selected?.serial || ''
         resetEmail()
       }
     } catch (e) {
@@ -790,8 +838,7 @@
       }
       if (newCustomer.value) {
         payload.new_customer = { ...newContact, language: i18n.global.locale.value }
-        payload.equipment = { ...guestEquipment }
-        delete payload.equipment_id
+        payload.equipment_ids = [...form.equipment_ids]
       }
       if (isNew) delete payload.agency_commission
       const r = await api(publicMode ? 'book' : 'saveorder', payload)
@@ -821,12 +868,30 @@
     try {
       equipment.value = await api('equipment')
       equipmentSearch.value = ''
-      customerId.value = equipment.value.find(e => Number(e.id) === Number(id))?.customer_id || null
-      form.equipment_id = Number(id)
+      attachEquipment(id)
     } catch (e) {
       saveError.value = e.message
     }
   }
+  function openUpload(kind, equipmentId = null) {
+    uploadKind.value = kind
+    reportEquipmentId.value = equipmentId
+    reportNumber.value = ''
+    uploadFile.value = null
+    documentError.value = ''
+    documentEditor.value = true
+  }
+
+  async function assignReport(doc) {
+    documentError.value = ''
+    try {
+      await api('assigndocument', { id: doc.id, equipment_id: reportAssignments[doc.id] })
+      documents.value = (await api('order/' + form.id)).documents
+    } catch (error) {
+      documentError.value = error.message
+    }
+  }
+
   async function upload() {
     if (!uploadFile.value) return
     uploading.value = true
@@ -839,13 +904,13 @@
         order_id: form.id,
         kind: uploadKind.value,
         report_number: reportNumber.value,
-        equipment_label: reportEquipment.value,
-        serial: reportSerial.value,
+        equipment_id: uploadKind.value === 'report' ? reportEquipmentId.value : null,
         filename: uploadFile.value.name,
         content: btoa(binary)
       })
       documents.value = (await api('order/' + form.id)).documents
       uploadFile.value = null
+      documentEditor.value = false
     } catch (e) {
       documentError.value = e.message
     } finally {

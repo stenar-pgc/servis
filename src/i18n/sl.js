@@ -79,7 +79,10 @@ export default {
     emptyHint: 'Dodajte padalo, rezervo ali letalni sedež.',
     title: 'Oprema',
     nextInspection: 'Naslednji pregled',
-    add: 'Dodaj novo opremo'
+    add: 'Dodaj novo opremo',
+    addExisting: 'Dodaj obstoječo opremo',
+    removeFromOrder: 'Odstrani iz servisa',
+    saveForReport: 'Shranite servis, da lahko za ta kos naložite poročilo.'
   },
   validation: {
     completeFields: 'Izpolnite označena obvezna polja.',
@@ -177,7 +180,11 @@ export default {
     paymentDetails: 'Vnesite znesek in datum plačila.',
     pdfRequired: 'Naložite PDF.',
     checkDetails: 'Preverite vnesene podatke.',
-    unavailable: 'Storitev trenutno ni na voljo. Poskusite znova.'
+    unavailable: 'Storitev trenutno ni na voljo. Poskusite znova.',
+    reportEquipment: 'Izberite opremo, povezano s tem servisom.',
+    removeEquipmentReports: 'Pred odstranitvijo opreme odstranite njena poročila.',
+    equipmentCustomer: 'Izbrana oprema mora pripadati stranki tega servisa.',
+    invoiceExists: 'Servis že ima račun. Pred nalaganjem novega odstranite obstoječi račun.'
   },
   orders: {
     createInvoice: 'Ustvari račun za servis',
@@ -315,7 +322,13 @@ export default {
     type: 'Vrsta dokumenta',
     reference: 'Evidenčna številka',
     choosePdf: 'Izberi PDF (do 10 MB)',
-    upload: 'Naloži dokument'
+    upload: 'Naloži dokument',
+    equipmentReports: 'Oprema in poročila',
+    addReport: 'Naloži poročilo za ta kos',
+    addInvoice: 'Naloži račun za servis',
+    noReport: 'Poročilo še ni naloženo.',
+    unassignedReports: 'Poročila brez povezane opreme',
+    assignReport: 'Poveži poročilo z opremo'
   },
   finance: {
     agencyFee: 'Cena agencije (€)',

@@ -61,8 +61,8 @@
         </template>
         <template #body-cell-equipment="p">
           <q-td :props="p">
-            <div v-if="p.row.equipment_id" class="table-title">
-              {{ p.row.manufacturer }} {{ p.row.model }} {{ p.row.size }}
+            <div v-if="p.row.equipment_count || p.row.equipment_id" class="table-title">
+              {{ p.row.equipment_label || [p.row.manufacturer, p.row.model, p.row.size].filter(Boolean).join(' ') }}
             </div>
             <div v-else class="table-title">{{ $t('equipment.unassigned') }}</div>
             <div class="table-sub">{{ p.row.customer_name || $t('customers.unassigned') }}</div>
@@ -145,7 +145,7 @@
     {
       name: 'equipment',
       label: t('orders.equipmentCustomer'),
-      field: r => `${r.manufacturer} ${r.model} ${r.customer_name}`,
+      field: r => `${r.equipment_label || ''} ${r.manufacturer || ''} ${r.model || ''} ${r.customer_name || ''}`,
       align: 'left'
     },
     { name: 'description', label: t('services.service'), field: 'description', align: 'left' },
