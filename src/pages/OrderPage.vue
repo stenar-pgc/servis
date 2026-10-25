@@ -84,6 +84,16 @@
                     </q-item>
                   </template>
                 </q-select>
+                <q-btn
+                  v-if="session.user?.admin && !newCustomer && form.equipment_id"
+                  flat
+                  dense
+                  no-caps
+                  color="primary"
+                  icon="edit"
+                  :label="$t('equipment.edit')"
+                  class="q-mt-sm q-mb-md"
+                  @click="editEquipment" />
                 <div v-if="session.user?.admin && newCustomer" class="form-grid q-mb-md">
                   <q-select
                     outlined
@@ -552,6 +562,7 @@
       v-if="!publicMode"
       v-model="equipmentEditor"
       :customers="customers"
+      :equipment="equipmentToEdit"
       :customer-id="customerId"
       @saved="equipmentSaved" />
   </q-page>
@@ -608,6 +619,7 @@
     documents = ref([]),
     comments = ref([]),
     equipmentEditor = ref(false),
+    equipmentToEdit = ref(null),
     loading = ref(true),
     loadError = ref(''),
     saving = ref(false),
@@ -678,7 +690,13 @@
   }
 
   function addEquipment() {
+    equipmentToEdit.value = null
     equipmentSelect.value.hidePopup()
+    equipmentEditor.value = true
+  }
+
+  function editEquipment() {
+    equipmentToEdit.value = equipment.value.find(item => Number(item.id) === Number(form.equipment_id))
     equipmentEditor.value = true
   }
 
