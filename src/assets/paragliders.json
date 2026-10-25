@@ -1,0 +1,771 @@
+{
+  "updatedAt": "2026-10-25",
+  "description": "Manufacturer/model suggestions from official catalogs, archives and Gliders.info. Includes discontinued models; not a complete catalog or an airworthiness database.",
+  "manufacturers": [
+    {
+      "name": "ADVANCE",
+      "aliases": [],
+      "models": [
+        "ALPHA",
+        "ALPHA 8",
+        "ALPHA 8 DLS",
+        "ALPHA DLS",
+        "BIBETA 6",
+        "EPSILON 10 DLS",
+        "EPSILON DLS",
+        "IOTA 3 DLS",
+        "IOTA DLS",
+        "OMEGA ULS",
+        "OMEGA XA 5 ULS",
+        "PI 4 ULS",
+        "PI ULS",
+        "PIBI",
+        "SIGMA 12 DLS",
+        "SIGMA DLS",
+        "TAU DLS",
+        "THETA ULS"
+      ],
+      "sources": [
+        "https://www.advance.swiss/en/products",
+        "https://gliders.info/"
+      ]
+    },
+    {
+      "name": "AirDesign",
+      "aliases": [
+        "Air Design",
+        "AD Gliders"
+      ],
+      "models": [
+        "Eazy 4",
+        "Hero 2",
+        "Hero XPed",
+        "Hike XPed",
+        "LiVi 2",
+        "Loco",
+        "Ride 4",
+        "Rise 5",
+        "RONIN",
+        "RONIN-Bi",
+        "Soar 2",
+        "SuSi 4",
+        "SuSi XPed",
+        "The New UFO",
+        "UFO 2",
+        "Vivo 3",
+        "Volt 5"
+      ],
+      "sources": [
+        "https://ad-gliders.com/download/",
+        "https://gliders.info/"
+      ]
+    },
+    {
+      "name": "BGD",
+      "aliases": [
+        "Bruce Goldsmith Design"
+      ],
+      "models": [
+        "Adam",
+        "Adam 2",
+        "Adam Spot",
+        "Anda",
+        "Base",
+        "Base 2",
+        "Base 2 Lite",
+        "Base 3",
+        "Base Lite",
+        "Breeze",
+        "Cure",
+        "Cure 2",
+        "Cure 3",
+        "Diva",
+        "Diva 2",
+        "Dual",
+        "Dual 2",
+        "Dual 3",
+        "Dual Lite",
+        "Echo",
+        "Echo 2",
+        "Epic",
+        "Epic 2",
+        "Epic Freestyle",
+        "Epic Freestyle 2",
+        "Kiss",
+        "Kiss 2",
+        "Lynx",
+        "Lynx 2",
+        "Magic",
+        "Magic 2",
+        "Punk",
+        "Riot",
+        "Seed",
+        "Tala",
+        "Tala Lite",
+        "Tigra",
+        "Wasp"
+      ],
+      "sources": [
+        "https://www.flybgd.com/en/paragliders/specifications-gliders-10-0-0.html"
+      ]
+    },
+    {
+      "name": "Davinci",
+      "aliases": [],
+      "models": [
+        "Classic 2",
+        "Duet",
+        "Duet Pro",
+        "Duet#",
+        "Funky 2",
+        "Hula",
+        "Mambo",
+        "Opera",
+        "Point 2",
+        "Popera",
+        "Rhythm 2",
+        "Tango"
+      ],
+      "sources": [
+        "https://flydavinci.com",
+        "https://gliders.info/"
+      ]
+    },
+    {
+      "name": "Dudek",
+      "aliases": [
+        "Dudek Paragliders"
+      ],
+      "models": [
+        "Accuracy",
+        "Boson",
+        "Cabrio",
+        "DriftAir 2",
+        "Hadron 4",
+        "Halo",
+        "Hike&Cruise",
+        "Marlin 2",
+        "Marlin Mono",
+        "Nemo 5",
+        "Nucleon 4",
+        "Optic 2",
+        "Orca 6",
+        "Run&Fly 2",
+        "Snake 4",
+        "Solo 2",
+        "Touch",
+        "Universal 1.1",
+        "V-King",
+        "V-King ES",
+        "Warp 3"
+      ],
+      "sources": [
+        "https://dudek.eu/wings/?product-classiffication=1"
+      ]
+    },
+    {
+      "name": "Flow",
+      "aliases": [],
+      "models": [
+        "Cosmos 2",
+        "F2 Light",
+        "Freedom 2",
+        "Fusion",
+        "Fusion Light",
+        "Future 2",
+        "Mystic",
+        "Mystic+",
+        "Panorama 2",
+        "Spectra 2",
+        "XCRacer 2"
+      ],
+      "sources": [
+        "https://www.flowparagliders.com.au",
+        "https://gliders.info/"
+      ]
+    },
+    {
+      "name": "GIN",
+      "aliases": [
+        "Gin Gliders"
+      ],
+      "models": [
+        "Atlas",
+        "Atlas 2",
+        "Atlas X-Alps",
+        "Avid",
+        "Bandit 2",
+        "Bobcat",
+        "Bolero +",
+        "Bolero 3",
+        "Bolero 4",
+        "Bolero 5",
+        "Bolero 6",
+        "Bolero 7",
+        "Bolero 8",
+        "Bonanza 2",
+        "Bonanza 3",
+        "Boomerang 10",
+        "Boomerang 11",
+        "Boomerang 12",
+        "Boomerang 7",
+        "Boomerang 8",
+        "Boomerang 9",
+        "Boomerang X",
+        "Calypso",
+        "Calypso 2",
+        "Camino",
+        "Camino 2",
+        "Carrera",
+        "Carrera +",
+        "Elise",
+        "Evora",
+        "Explorer",
+        "Explorer 2",
+        "Explorer 3",
+        "Fluid 2",
+        "Fuse",
+        "Fuse 2",
+        "Fuse 3",
+        "Fuse 4",
+        "Fuse mini",
+        "Gangster",
+        "Gangster 2",
+        "Griffin",
+        "GTO 2",
+        "GTO 3",
+        "Leopard",
+        "Nano 4",
+        "Osprey",
+        "Puma",
+        "Puma2",
+        "Rebel 2",
+        "Rebel Race",
+        "Safari",
+        "Sprint",
+        "Sprint 3",
+        "Sprint Evo",
+        "Sprint X-Alps",
+        "Tribe",
+        "Yak",
+        "Yeti 2",
+        "Yeti 3",
+        "Yeti 4",
+        "Yeti 5",
+        "Yeti 6",
+        "Yeti tandem",
+        "Yeti Tandem 3"
+      ],
+      "sources": [
+        "https://www.gingliders.com/en/included-products/",
+        "https://www.gingliders.com/en/paragliders/discontinued/",
+        "https://gliders.info/"
+      ]
+    },
+    {
+      "name": "Icaro",
+      "aliases": [],
+      "models": [
+        "Buteo XC",
+        "Falco",
+        "Gravis²",
+        "Pandion 2",
+        "Parus²",
+        "Pica2",
+        "Xenus"
+      ],
+      "sources": [
+        "https://www.icaro-paragliders.com",
+        "https://gliders.info/"
+      ]
+    },
+    {
+      "name": "MAC PARA",
+      "aliases": [
+        "Macpara",
+        "MAC PARA Technology"
+      ],
+      "models": [
+        "Aravis",
+        "Charger 2",
+        "Charger 2 Trike",
+        "Charger 3",
+        "Colorado 2",
+        "Colorado 2 GT",
+        "Eden 8",
+        "Elan 3",
+        "Elixir",
+        "Illusion 2",
+        "Illusion 2 Hybrid",
+        "Magus",
+        "Muse 5",
+        "Muse 5 Hybrid",
+        "Pasha 5 Trike",
+        "Pasha 7",
+        "Pasha 7 Trike",
+        "Progress 2",
+        "Samurai",
+        "T-Ride",
+        "Verve"
+      ],
+      "sources": [
+        "https://www.macpara.com/en/paragliders/"
+      ]
+    },
+    {
+      "name": "Nervures",
+      "aliases": [],
+      "models": [
+        "Fitz Roy",
+        "Kido",
+        "Morea 2",
+        "Spantik 2",
+        "Swoop XP2",
+        "Whizz 3"
+      ],
+      "sources": [
+        "https://www.nervures.com",
+        "https://gliders.info/"
+      ]
+    },
+    {
+      "name": "Niviuk",
+      "aliases": [
+        "Niviuk Gliders"
+      ],
+      "models": [
+        "Artik 7 P",
+        "Artik R 2",
+        "Bi Roller 2",
+        "Bi Skin 2 P",
+        "Dobermann 3",
+        "Hiko",
+        "Hiko P",
+        "Hook 6",
+        "Hook 6 P",
+        "Hook 7",
+        "Hook 7 P",
+        "Icepeak X-One",
+        "Ikuma 3",
+        "Ikuma 3 P",
+        "Jester",
+        "Klimber 3 P",
+        "Kode 2 P",
+        "Kougar 3",
+        "Koyot 6",
+        "Koyot 6 P",
+        "Link 3",
+        "Peak 6",
+        "Peak 7",
+        "Qubik 2",
+        "R-Bus 3",
+        "Skin 4 P",
+        "Takoo 6",
+        "Target",
+        "Wilko"
+      ],
+      "sources": [
+        "https://niviuk.com/en/products",
+        "https://gliders.info/"
+      ]
+    },
+    {
+      "name": "NOVA",
+      "aliases": [
+        "Nova Performance Paragliders"
+      ],
+      "models": [
+        "AONIC 2",
+        "Aonic light",
+        "BANTAM 2",
+        "BION 3",
+        "CODEX",
+        "DOUBLESKIN 2",
+        "GLITCH",
+        "Ion 7",
+        "ION 7 Light",
+        "MENTOR 7",
+        "MENTOR 7 Light",
+        "NEXO",
+        "NIVO",
+        "Phantom",
+        "Prion 6",
+        "VORTEX",
+        "XENON 3"
+      ],
+      "sources": [
+        "https://www.nova.eu/en/gliders/",
+        "https://gliders.info/"
+      ]
+    },
+    {
+      "name": "Ozone",
+      "aliases": [
+        "Ozone Gliders"
+      ],
+      "models": [
+        "Alpina 4 GT",
+        "Alpina 5",
+        "Alta",
+        "Alta GT",
+        "Buzz Z7",
+        "Delta 5",
+        "Enzo 3",
+        "Geo 7",
+        "Lyght",
+        "Magnum 4",
+        "Moxie",
+        "Photon",
+        "Roadrunner",
+        "Rush 6",
+        "Session",
+        "Swift 6",
+        "Swiftmax 2",
+        "Ultralite 5",
+        "Vibe GT",
+        "Wisp 2",
+        "Zeno 2",
+        "Zeolite 2",
+        "Zeolite 2 GT"
+      ],
+      "sources": [
+        "https://flyozone.com/paragliders/products/gliders",
+        "https://gliders.info/"
+      ]
+    },
+    {
+      "name": "PHI",
+      "aliases": [
+        "PHI Air",
+        "Papesh"
+      ],
+      "models": [
+        "Allegro",
+        "Allegro light",
+        "Beat 2",
+        "Beat 2 light",
+        "Beat light",
+        "Concerto",
+        "Fantasia",
+        "Maestro",
+        "Maestro 3",
+        "Maestro 3 light",
+        "Maestro light",
+        "Rondo",
+        "Scala 2",
+        "Scala 2 light",
+        "Scala light",
+        "Sola",
+        "Sola GT",
+        "Sola UL",
+        "Sonata 2",
+        "Symphonia",
+        "Symphonia 2",
+        "Symphonia 2 light",
+        "Tenor 2",
+        "Tenor 2 light",
+        "Viola 2"
+      ],
+      "sources": [
+        "https://phi-air.com/project/overview/",
+        "https://phi-air.com/fr/sale/"
+      ]
+    },
+    {
+      "name": "Profly",
+      "aliases": [],
+      "models": [
+        "Leeloo",
+        "LeelooX"
+      ],
+      "sources": [
+        "https://www.profly.org",
+        "https://gliders.info/"
+      ]
+    },
+    {
+      "name": "SKY",
+      "aliases": [
+        "Sky Paragliders"
+      ],
+      "models": [
+        "Apollo 3",
+        "Apollo 3 Light",
+        "Apollo Bi",
+        "Aya 2",
+        "Carancho",
+        "Cima PWR",
+        "Exos 2",
+        "Flexor",
+        "Flux",
+        "Fujin",
+        "Gaia 3",
+        "Kea 2",
+        "Kooky 2",
+        "Kooky 2 Bi",
+        "Kooky 2 Pro",
+        "Kudos 2",
+        "Merlin",
+        "Metis 5",
+        "Pixel",
+        "Pixel Light",
+        "Puzzle",
+        "Z-Blade",
+        "Zoe",
+        "Zoe Light",
+        "Zorro"
+      ],
+      "sources": [
+        "https://sky-cz.com/en/gliders",
+        "https://sky-cz.com/en"
+      ]
+    },
+    {
+      "name": "Sky Country",
+      "aliases": [],
+      "models": [
+        "Discovery-6",
+        "Escalar",
+        "Muscat 3",
+        "Mystic-5",
+        "Scooter-3",
+        "Space"
+      ],
+      "sources": [
+        "https://sky-country.com",
+        "https://gliders.info/"
+      ]
+    },
+    {
+      "name": "Skyman",
+      "aliases": [],
+      "models": [
+        "Crossalps 3",
+        "CrossCountry 3",
+        "Rock 3",
+        "Sir Edmund 3",
+        "Sir Edmund Shark",
+        "Tandem"
+      ],
+      "sources": [
+        "https://skyman.aero",
+        "https://gliders.info/"
+      ]
+    },
+    {
+      "name": "Skywalk",
+      "aliases": [
+        "Skywalk Paragliders"
+      ],
+      "models": [
+        "Arak 2",
+        "Arak Air 2",
+        "Arriba 1",
+        "Arriba 2",
+        "Cayenne 1",
+        "Cayenne 2",
+        "Cayenne 3",
+        "Cayenne 4",
+        "Chili 5",
+        "Chili 6",
+        "Cumeo 2",
+        "Join't 5",
+        "Masala 4",
+        "Mescal 2",
+        "Mescal 3",
+        "Mescal 4",
+        "Mescal 7",
+        "Mint",
+        "Mojito HY",
+        "Pace",
+        "Poison 1",
+        "Poison 2",
+        "Poison 3",
+        "Poison 4",
+        "Sage",
+        "Scotch HY",
+        "SileXx",
+        "Spirit",
+        "Tequila 1",
+        "Tequila 2",
+        "Tequila 3",
+        "Tequila 4",
+        "Tequila 6",
+        "Tonic 2",
+        "Tonka 1",
+        "X-Alps 6"
+      ],
+      "sources": [
+        "https://skywalk.info/",
+        "https://skywalk.info/product-archive/",
+        "https://gliders.info/"
+      ]
+    },
+    {
+      "name": "Sol",
+      "aliases": [],
+      "models": [
+        "Atmus 3",
+        "Connect One Bi",
+        "Cyclus 2",
+        "Kuat 3",
+        "LT 2",
+        "Prymus 6",
+        "Sensus One",
+        "Sycross 3"
+      ],
+      "sources": [
+        "https://www.solparagliders.com.br",
+        "https://gliders.info/"
+      ]
+    },
+    {
+      "name": "SUPAIR",
+      "aliases": [
+        "Sup'Air",
+        "Sup Air"
+      ],
+      "models": [
+        "Birdy 2",
+        "Eiko 2",
+        "Eona 4",
+        "Leaf",
+        "Leaf 2",
+        "Leaf 3",
+        "Leaf 3 Light",
+        "Savage",
+        "Savage 2",
+        "Sora 2+",
+        "Sora EVO",
+        "Step",
+        "Step Light",
+        "Step X",
+        "Wild 2"
+      ],
+      "sources": [
+        "https://supair.com/en/categorie-produit/voiles/",
+        "https://supair.com/en/trouver-votre-equipement/",
+        "https://www.supair.com/document/notices/notice_STEP_EN.pdf",
+        "https://supair.com/wp-content/uploads/2022/05/notice_leaf_fr.pdf"
+      ]
+    },
+    {
+      "name": "Swing",
+      "aliases": [
+        "Swing Flugsport"
+      ],
+      "models": [
+        "Libra RS",
+        "Mirage 2 RS",
+        "Mito 2 RS",
+        "Mito 3 RS D-Lite",
+        "Miura 2 RS",
+        "Miura 2 RS D-Lite",
+        "Nyos 2 RS",
+        "Nyra RS",
+        "Serac RS",
+        "Sonic RS",
+        "Sphera 2 RS",
+        "Sphera RS",
+        "Spitfire 3",
+        "Spitfire Classic",
+        "Stellar RS",
+        "Twin 3 RS",
+        "Twin R3 RS",
+        "Verso RS",
+        "Wave RS"
+      ],
+      "sources": [
+        "https://www.swing.de/produkte/",
+        "https://gliders.info/"
+      ]
+    },
+    {
+      "name": "Triple Seven",
+      "aliases": [
+        "777",
+        "777 Gliders"
+      ],
+      "models": [
+        "Bishop",
+        "Gambit",
+        "K-light 2",
+        "King 2",
+        "Knight 2",
+        "M-light",
+        "Matrix",
+        "Q-light 3",
+        "Queen 3",
+        "Rook 4"
+      ],
+      "sources": [
+        "https://www.777gliders.com",
+        "https://gliders.info/"
+      ]
+    },
+    {
+      "name": "U-Turn",
+      "aliases": [],
+      "models": [
+        "Annapurna 2",
+        "Asterion LT",
+        "Emotion 4",
+        "Eternity 4",
+        "Evolution",
+        "Infinity 5",
+        "Lightning 2",
+        "Morpheus NG",
+        "Obsession 5",
+        "Passenger 3",
+        "Vision"
+      ],
+      "sources": [
+        "https://u-turn.de",
+        "https://gliders.info/"
+      ]
+    },
+    {
+      "name": "UP",
+      "aliases": [
+        "UP International",
+        "UP Paragliders"
+      ],
+      "models": [
+        "Cerro",
+        "Dena",
+        "K2 5",
+        "Kailash",
+        "Kangri X",
+        "Kibo X",
+        "Lhotse X",
+        "Makalu 5",
+        "Mana 2",
+        "Meru 2",
+        "Misti",
+        "Rimo 2",
+        "Summit X",
+        "Torre",
+        "Trango X"
+      ],
+      "sources": [
+        "https://www.up-paragliders.com/en/"
+      ]
+    },
+    {
+      "name": "Zoom",
+      "aliases": [],
+      "models": [
+        "X2C",
+        "X2C LT",
+        "XA",
+        "XA LT",
+        "XB LT",
+        "XHB"
+      ],
+      "sources": [
+        "https://www.zoom-paragliders.com",
+        "https://gliders.info/"
+      ]
+    }
+  ]
+}

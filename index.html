@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="sl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#176b62" />
+    <meta name="description" content="Stenar – servis jadralnih padal in evidenca opreme." />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Stenar · Servis</title>
+  </head>
+  <body>
+    <script>
+      const route = new URLSearchParams(location.search).get('__spa')
+      if (route && route.startsWith('/') && !route.startsWith('//')) {
+        history.replaceState(null, '', route)
+      }
+    </script>
+    <!-- quasar:entry-point -->
+  </body>
+</html>
