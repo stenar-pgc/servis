@@ -109,10 +109,6 @@
                     v-model="contact.phone"
                     :label="$t('contact.phone') + ' *'"
                     :rules="[required]" />
-                  <q-checkbox v-model="contact.create_account" :label="$t('auth.wantAccount')" class="wide" />
-                  <p v-if="contact.create_account" class="wide text-caption text-grey-7">
-                    {{ $t('auth.activationSent') }}
-                  </p>
                 </div>
                 <div v-else-if="session.user?.admin" class="q-mb-lg">
                   <q-toggle v-model="newCustomer" :label="$t('customers.new')" />
@@ -155,9 +151,6 @@
                     <div v-if="owner?.phone" class="text-grey-7">
                       {{ owner.phone }}
                     </div>
-                    <div v-if="owner?.address" class="text-grey-7 q-mt-xs">
-                      {{ owner.address }}
-                    </div>
                   </div>
                   <q-space />
                   <q-btn
@@ -168,15 +161,23 @@
                     icon="edit"
                     :label="$t('profile.title')" />
                 </div>
-                <div class="form-grid q-mt-lg">
-                  <q-input
-                    outlined
-                    v-model="form.contact_address"
-                    :label="$t('contact.postalAddress')"
+                <template v-if="!session.user?.admin || newCustomer">
+                  <div class="text-weight-medium q-mt-lg">{{ $t('contact.customerAddress') }}</div>
+                  <PostalAddressFields
+                    v-model:address="form.contact_address"
+                    v-model:postal-code="form.contact_postal_code"
+                    v-model:city="form.contact_city"
+                    v-model:country="form.contact_country"
+                    :required="!session.user?.admin && usesContactAddress"
                     :readonly="readonly"
-                    class="wide" />
-                  <CountrySelect v-model="form.contact_country" :readonly="readonly" />
-                </div>
+                    class="q-mt-md" />
+                </template>
+                <template v-if="publicMode">
+                  <q-checkbox v-model="contact.create_account" :label="$t('auth.wantAccount')" class="q-mt-md" />
+                  <p v-if="contact.create_account" class="text-caption text-grey-7">
+                    {{ $t('auth.activationSent') }}
+                  </p>
+                </template>
                 <q-checkbox
                   v-if="!readonly"
                   v-model="hasDiscount"
@@ -215,40 +216,33 @@
                   :options="translatedDeliveries"
                   :disable="readonly"
                   color="primary" />
-                <div v-if="postalDelivery" class="q-mt-lg">
-                  <div class="text-weight-medium">{{ $t('delivery.shippingAddress') }}</div>
-                  <p class="text-caption text-grey-7 q-mt-xs">{{ $t('delivery.addressHint') }}</p>
+                <q-card v-for="block in deliveryAddresses" :key="block.prefix" flat bordered class="q-pa-md q-mt-md">
+                  <div class="text-weight-medium q-mb-sm">{{ $t(block.title) }}</div>
                   <q-checkbox
-                    v-model="form.shipping_same_address"
-                    :label="$t('delivery.sameAddress')"
+                    v-model="form[block.prefix + '_same_address']"
+                    :label="$t(block.sameLabel)"
                     :disable="readonly" />
-                  <div v-if="form.shipping_same_address" class="q-my-sm">
-                    <div>{{ form.contact_address || $t('delivery.missingAddress') }}</div>
+                  <div v-if="form[block.prefix + '_same_address']" class="q-pa-md text-body2">
+                    <strong>{{ contactName || $t('contact.fullName') }}</strong>
+                    <div class="q-mt-xs">{{ form.contact_address || $t('contact.street') }}</div>
+                    <div>
+                      {{ form.contact_postal_code || $t('contact.postalCode') }}
+                      {{ form.contact_city || $t('contact.city') }}
+                    </div>
                     <div>{{ countryName(form.contact_country) }}</div>
                   </div>
-                  <div v-else class="form-grid q-mt-md">
-                    <q-input
-                      outlined
-                      v-model="form.shipping_address"
-                      :label="$t('contact.postalAddress')"
-                      :rules="session.user?.admin ? [] : [required]"
-                      :readonly="readonly"
-                      class="wide" />
-                    <CountrySelect v-model="form.shipping_country" :readonly="readonly" />
-                  </div>
-                  <q-field
-                    borderless
-                    dense
-                    :model-value="confirmedAddress"
-                    :rules="session.user?.admin || readonly ? [] : [v => v || $t('delivery.confirmRequired')]">
-                    <template #control>
-                      <q-checkbox
-                        v-model="form.shipping_confirmed"
-                        :label="$t('delivery.confirmAddress')"
-                        :disable="readonly" />
-                    </template>
-                  </q-field>
-                </div>
+                  <PostalAddressFields
+                    v-else
+                    v-model:name="form[block.prefix + '_name']"
+                    v-model:address="form[block.prefix + '_address']"
+                    v-model:postal-code="form[block.prefix + '_postal_code']"
+                    v-model:city="form[block.prefix + '_city']"
+                    v-model:country="form[block.prefix + '_country']"
+                    with-name
+                    :required="!session.user?.admin"
+                    :readonly="readonly"
+                    class="q-mt-md" />
+                </q-card>
                 <q-input
                   v-if="form.delivery === 'other'"
                   outlined
@@ -619,10 +613,9 @@
             <div>
               {{ orderEquipment.map(equipmentLabel).join(', ') || $t('equipment.unassigned') }}
             </div>
-            <div v-if="postalDelivery" class="q-mt-sm">
-              <strong>{{ $t('delivery.shippingAddress') }}</strong>
-              <div>{{ returnAddress }}</div>
-              <div>{{ countryName(returnCountry) }}</div>
+            <div v-for="block in deliveryAddresses" :key="block.prefix" class="q-mt-sm">
+              <strong>{{ $t(block.title) }}</strong>
+              <div v-for="(line, index) in addressLines(block.prefix)" :key="index">{{ line }}</div>
             </div>
             <p class="q-mb-none q-mt-sm">{{ form.description }}</p>
           </div>
@@ -702,7 +695,7 @@
     statuses
   } from '../services/api'
   import { t, i18n, translateText } from '../i18n'
-  import CountrySelect from '../components/CountrySelect.vue'
+  import PostalAddressFields from '../components/PostalAddressFields.vue'
   import { postalRate } from '../services/shipping'
   import ErrorBanner from '../components/ErrorBanner.vue'
   import EquipmentEditor from '../components/EquipmentEditor.vue'
@@ -724,11 +717,21 @@
     delivery: 'personal',
     delivery_note: '',
     contact_address: '',
+    contact_postal_code: '',
+    contact_city: '',
     contact_country: 'SI',
     shipping_same_address: true,
+    shipping_name: '',
     shipping_address: '',
+    shipping_postal_code: '',
+    shipping_city: '',
     shipping_country: 'SI',
-    shipping_confirmed: false,
+    pickup_same_address: true,
+    pickup_name: '',
+    pickup_address: '',
+    pickup_postal_code: '',
+    pickup_city: '',
+    pickup_country: 'SI',
     payment_method: 'pickup',
     english_report: false,
     discount_code: '',
@@ -873,14 +876,42 @@
   const countryName = code => new Intl.DisplayNames([i18n.global.locale.value], { type: 'region' }).of(code || 'SI')
   const postalDelivery = computed(() => ['post', 'gls'].includes(form.delivery))
   const returnCountry = computed(() => (form.shipping_same_address ? form.contact_country : form.shipping_country))
-  const returnAddress = computed(() => (form.shipping_same_address ? form.contact_address : form.shipping_address))
-  const confirmedAddress = computed(() => form.shipping_confirmed && !!returnAddress.value.trim())
+  const contactName = computed(() =>
+    publicMode
+      ? [contact.first, contact.last].filter(Boolean).join(' ')
+      : newCustomer.value
+        ? newContact.name
+        : owner.value?.name || ''
+  )
+  const usesContactAddress = computed(
+    () => postalDelivery.value && (form.shipping_same_address || (form.delivery === 'gls' && form.pickup_same_address))
+  )
+  const deliveryAddresses = computed(() => [
+    ...(form.delivery === 'gls'
+      ? [{ prefix: 'pickup', title: 'delivery.pickupAddress', sameLabel: 'delivery.pickupSame' }]
+      : []),
+    ...(postalDelivery.value
+      ? [{ prefix: 'shipping', title: 'delivery.returnAddress', sameLabel: 'delivery.returnSame' }]
+      : [])
+  ])
+  function addressLines(prefix) {
+    const same = form[prefix + '_same_address']
+    const source = same ? 'contact' : prefix
+    return [
+      same ? contactName.value : form[prefix + '_name'],
+      form[source + '_address'],
+      [form[source + '_postal_code'], form[source + '_city']].filter(Boolean).join(' '),
+      countryName(form[source + '_country'])
+    ].filter(Boolean)
+  }
   watch(
     customerId,
     () => {
       if (loading.value) return
       form.contact_address = owner.value?.address || ''
       form.contact_country = owner.value?.country || 'SI'
+      form.contact_postal_code = owner.value?.postal_code || ''
+      form.contact_city = owner.value?.city || ''
     },
     { flush: 'sync' }
   )
@@ -888,21 +919,9 @@
     if (loading.value) return
     form.contact_address = value ? '' : owner.value?.address || ''
     form.contact_country = value ? 'SI' : owner.value?.country || 'SI'
+    form.contact_postal_code = value ? '' : owner.value?.postal_code || ''
+    form.contact_city = value ? '' : owner.value?.city || ''
   })
-  watch(
-    () => [
-      form.contact_address,
-      form.contact_country,
-      form.shipping_address,
-      form.shipping_country,
-      form.shipping_same_address,
-      form.delivery
-    ],
-    () => {
-      if (!loading.value) form.shipping_confirmed = false
-    },
-    { flush: 'sync' }
-  )
   const translatedDeliveries = computed(() =>
     deliveries.map(d => ({
       ...d,
@@ -944,11 +963,15 @@
       if (isNew) {
         form.contact_address = session.user?.admin ? '' : session.user?.address || ''
         form.contact_country = session.user?.admin ? 'SI' : session.user?.country || 'SI'
+        form.contact_postal_code = session.user?.admin ? '' : session.user?.postal_code || ''
+        form.contact_city = session.user?.admin ? '' : session.user?.city || ''
         form.equipment_ids = route.query.equipment ? [Number(route.query.equipment)] : []
         customerId.value = orderEquipment.value[0]?.customer_id || null
         if (customerId.value) {
           form.contact_address = owner.value?.address || ''
           form.contact_country = owner.value?.country || 'SI'
+          form.contact_postal_code = owner.value?.postal_code || ''
+          form.contact_city = owner.value?.city || ''
         }
       } else {
         newCustomer.value = false
@@ -956,7 +979,7 @@
         Object.assign(form, order, {
           equipment_ids: (order.equipment_ids || (order.equipment_id ? [order.equipment_id] : [])).map(Number),
           shipping_same_address: order.shipping_same_address == null || !!Number(order.shipping_same_address),
-          shipping_confirmed: !!Number(order.shipping_confirmed),
+          pickup_same_address: order.pickup_same_address == null || !!Number(order.pickup_same_address),
           english_report: !!Number(order.english_report),
           finance_complete: !!Number(order.finance_complete),
           discount_code: ''
@@ -999,6 +1022,8 @@
           ...contact,
           address: form.contact_address,
           country: form.contact_country,
+          postal_code: form.contact_postal_code,
+          city: form.contact_city,
           language: i18n.global.locale.value
         }
       }
@@ -1007,6 +1032,8 @@
           ...newContact,
           address: form.contact_address,
           country: form.contact_country,
+          postal_code: form.contact_postal_code,
+          city: form.contact_city,
           language: i18n.global.locale.value
         }
         payload.equipment_ids = [...form.equipment_ids]

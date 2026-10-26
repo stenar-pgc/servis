@@ -1,13 +1,10 @@
 export default {
   delivery: {
-    shippingAddress: 'Collection and return address',
-    addressHint:
-      'GLS collection and return use the same address. If you arrange shipping yourself, this address is used for the return.',
-    sameAddress: 'Use the address from customer details',
-    missingAddress: 'Enter an address in Your details or choose a different address below.',
-    confirmAddress: 'I confirm that the collection / return address is correct.',
-    confirmRequired: 'Enter and confirm the collection / return address.',
-
+    pickupAddress: 'GLS collection address',
+    returnAddress: 'Equipment return address',
+    pickupSame: "Collect the equipment from the customer's address",
+    returnSame: "Return the equipment to the customer's address",
+    incompleteAddress: 'Complete the customer address or the alternative collection and return addresses.',
     personal: 'I will deliver and collect the equipment in person (Škofja Loka, Dražgoše, on site).',
     post: 'I will arrange shipping to your address; please return the equipment by post after servicing (+{price}).',
     gls: 'Please send a GLS courier to collect the equipment from my address and return it by post after servicing (+€10).',
@@ -285,6 +282,11 @@ export default {
     account: 'Account'
   },
   contact: {
+    customerAddress: 'Customer address',
+    street: 'Street and house number',
+    postalCode: 'Postal code',
+    city: 'City',
+    recipient: 'Full name or company',
     country: 'Country',
     postalAddress: 'Street and house number, postal code and city',
     firstName: 'First name',

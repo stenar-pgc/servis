@@ -40,8 +40,12 @@
           type="email"
           :rules="[v => !!v || $t('validation.required')]" />
         <q-input outlined v-model="form.phone" :label="$t('contact.phone')" />
-        <q-input outlined v-model="form.address" :label="$t('contact.address')" />
-        <CountrySelect v-model="form.country" />
+        <PostalAddressFields
+          v-model:address="form.address"
+          v-model:postal-code="form.postal_code"
+          v-model:city="form.city"
+          v-model:country="form.country"
+          class="wide" />
         <LanguageSwitcher />
         <p class="text-caption text-grey-7">
           {{ $t('profile.contactHint') }}
@@ -121,7 +125,7 @@
   import { api, date, inspectionState, money, orderNumber, session } from '../services/api'
   import { t, i18n } from '../i18n'
   import LanguageSwitcher from '../components/LanguageSwitcher.vue'
-  import CountrySelect from '../components/CountrySelect.vue'
+  import PostalAddressFields from '../components/PostalAddressFields.vue'
   import ErrorBanner from '../components/ErrorBanner.vue'
   import StatusBadge from '../components/StatusBadge.vue'
   const commissionPeriod = ref('all')
@@ -141,7 +145,7 @@
     equipment = ref([]),
     orders = ref([]),
     commissions = ref({ agency: null, orders: [] }),
-    form = reactive({ country: 'SI', ...session.user }),
+    form = reactive({ country: 'SI', postal_code: '', city: '', ...session.user }),
     error = ref(''),
     saveError = ref(''),
     saving = ref(false),

@@ -1,13 +1,10 @@
 export default {
   delivery: {
-    shippingAddress: 'Naslov za prevzem in vračilo',
-    addressHint:
-      'Pri GLS prevzem in vračilo potekata na istem naslovu. Pri lastnem pošiljanju ta naslov uporabimo za vračilo.',
-    sameAddress: 'Uporabi naslov iz podatkov stranke',
-    missingAddress: 'V razdelku Vaši podatki vnesite naslov ali spodaj izberite drug naslov.',
-    confirmAddress: 'Potrjujem, da je naslov za prevzem oziroma vračilo pravilen.',
-    confirmRequired: 'Vnesite in potrdite naslov za prevzem oziroma vračilo.',
-
+    pickupAddress: 'Naslov za GLS prevzem opreme',
+    returnAddress: 'Naslov za vračilo opreme',
+    pickupSame: 'Prevzem opreme na naslovu stranke',
+    returnSame: 'Opremo vrnite na naslov stranke',
+    incompleteAddress: 'Izpolnite naslov stranke oziroma drug naslov za prevzem in vračilo.',
     personal: 'Opremo bom osebno dostavil in prevzel (Škofja Loka, Dražgoše, teren).',
     post: 'Sam bom organiziral pošiljanje opreme na vaš naslov, po servisu mi jo vrnite po pošti (+{price}).',
     gls: 'Pošljite GLS kurirja na moj naslov za prevzem opreme, po servisu mi jo vrnite po pošti (+10 €).',
@@ -284,6 +281,11 @@ export default {
     account: 'Uporabniški račun'
   },
   contact: {
+    customerAddress: 'Naslov stranke',
+    street: 'Ulica in hišna številka',
+    postalCode: 'Poštna številka',
+    city: 'Kraj',
+    recipient: 'Ime in priimek ali podjetje',
     country: 'Država',
     postalAddress: 'Ulica in hišna številka, poštna številka in kraj',
     firstName: 'Ime',

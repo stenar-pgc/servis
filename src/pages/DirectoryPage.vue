@@ -135,8 +135,12 @@
                 type="email"
                 :rules="[required]" />
               <q-input outlined dense v-model="form.phone" :label="$t('contact.phone')" />
-              <q-input outlined dense v-model="form.address" :label="$t('contact.address')" class="wide" />
-              <CountrySelect v-model="form.country" />
+              <PostalAddressFields
+                v-model:address="form.address"
+                v-model:postal-code="form.postal_code"
+                v-model:city="form.city"
+                v-model:country="form.country"
+                class="wide" />
               <q-select
                 outlined
                 dense
@@ -262,7 +266,7 @@
   import { useRoute } from 'vue-router'
   import { api, date, money } from '../services/api'
   import { t } from '../i18n'
-  import CountrySelect from '../components/CountrySelect.vue'
+  import PostalAddressFields from '../components/PostalAddressFields.vue'
   import ErrorBanner from '../components/ErrorBanner.vue'
   const q = useQuasar()
   const kind = useRoute().meta.kind
@@ -388,6 +392,8 @@
         phone: '',
         address: '',
         country: 'SI',
+        postal_code: '',
+        city: '',
         role: 'customer',
         language: 'sl',
         user_id: null,
