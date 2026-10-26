@@ -11,7 +11,7 @@
       <q-card-section v-if="registered">
         <q-icon name="mark_email_read" size="40px" color="primary" class="q-mb-md" />
         <h2>{{ $t('auth.checkEmail') }}</h2>
-        <p class="q-mt-md">{{ $t('auth.activationSent') }}</p>
+        <p class="q-mt-md">{{ $t('auth.accessHint') }}</p>
         <p class="text-grey-7">{{ form.mail }}</p>
         <ErrorBanner :message="error" />
         <q-btn outline no-caps color="primary" :label="$t('auth.resendEmail')" :loading="loading" @click="resend" />
@@ -46,7 +46,7 @@
             type="tel"
             autocomplete="tel"
             :rules="[required]" />
-          <p class="text-caption text-grey-7">{{ $t('auth.activationSent') }}</p>
+          <p class="text-caption text-grey-7">{{ $t('auth.accessHint') }}</p>
         </template>
         <template v-else>
           <q-input
@@ -114,7 +114,7 @@
       } else {
         const result = await api('register', { ...form, language: i18n.global.locale.value })
         registered.value = true
-        if (!result.activation_sent) error.value = t('errors.emailFailed')
+        if (!result.access_sent) error.value = t('errors.emailFailed')
       }
     } catch (e) {
       error.value = e.message
@@ -127,8 +127,8 @@
     loading.value = true
     error.value = ''
     try {
-      await api('resend', { mail: form.mail })
-      q.notify({ type: 'positive', message: t('auth.activationSent') })
+      await api('requestaccess', { mail: form.mail })
+      q.notify({ type: 'positive', message: t('auth.accessSent') })
     } catch (e) {
       error.value = e.message
     } finally {

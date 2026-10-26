@@ -9,6 +9,18 @@ export default defineRouter(() => {
     routes: [
       { path: '/prijava', component: () => import('../pages/LoginPage.vue') },
       {
+        path: '/povezava-za-prijavo',
+        component: () => import('../layouts/PublicLayout.vue'),
+        meta: { public: true },
+        children: [{ path: '', component: () => import('../pages/AccessPage.vue') }]
+      },
+      {
+        path: '/dostop/:token',
+        component: () => import('../layouts/PublicLayout.vue'),
+        meta: { public: true },
+        children: [{ path: '', component: () => import('../pages/AccessPage.vue') }]
+      },
+      {
         path: '/pozabljeno-geslo',
         component: () => import('../layouts/PublicLayout.vue'),
         meta: { public: true },
@@ -70,7 +82,8 @@ export default defineRouter(() => {
   })
   router.beforeEach(async to => {
     await restore()
-    if (to.path !== '/prijava' && !to.meta.public && !session.user) return '/prijava'
+    if (to.path !== '/prijava' && !to.meta.public && !session.user)
+      return { path: '/prijava', query: { redirect: to.fullPath } }
     if (to.path === '/narocilo' && session.user) return '/servisi/novo'
     if (to.meta.admin && !session.user?.admin) return '/servisi'
     if (to.path === '/prijava' && session.user) return '/servisi'

@@ -24,11 +24,17 @@
     <q-banner v-if="submitted" rounded class="bg-teal-1 text-primary q-mb-lg">
       {{ $t('orders.received') }} {{ orderNumber(submitted) }}
     </q-banner>
-    <div v-if="submitted && contact.create_account" class="q-mb-lg">
-      <p>{{ $t('auth.activationSent') }}</p>
-      <ErrorBanner :message="activationSent ? '' : $t('errors.emailFailed')" />
-      <q-btn outline no-caps color="primary" :label="$t('auth.resendEmail')" @click="resendActivation" />
+    <div v-if="submitted" class="q-mb-lg">
+      <p>{{ $t('auth.accessSent') }}</p>
+      <ErrorBanner :message="accessSent ? '' : $t('errors.emailFailed')" />
+      <q-btn outline no-caps color="primary" :label="$t('auth.resendEmail')" :loading="sendingAccess" @click="resendAccess" />
     </div>
+    <q-banner v-if="form.confirmation_pending" rounded class="bg-orange-1 text-orange-9 q-mb-lg">
+      {{ $t('orders.confirmationPending') }}
+      <div v-if="form.pending_contact" class="q-mt-xs">
+        {{ form.pending_contact.name }} · {{ form.pending_contact.mail }} · {{ form.pending_contact.phone }}
+      </div>
+    </q-banner>
     <q-form
       v-if="!loading && !loadError && !submitted"
       greedy
@@ -169,10 +175,7 @@
                     class="q-mt-md" />
                 </template>
                 <template v-if="publicMode">
-                  <q-checkbox v-model="contact.create_account" :label="$t('auth.wantAccount')" class="q-mt-md" />
-                  <p v-if="contact.create_account" class="text-caption text-grey-7">
-                    {{ $t('auth.activationSent') }}
-                  </p>
+                  <p class="text-caption text-grey-7 q-mt-md">{{ $t('auth.automaticAccount') }}</p>
                 </template>
                 <q-checkbox
                   v-if="!readonly"
@@ -762,9 +765,10 @@
   const newCustomer = ref(false)
   const customerId = ref(null)
   const newContact = reactive({ name: '', mail: '', phone: '' })
-  const contact = reactive({ first: '', last: '', mail: '', phone: '', create_account: true })
+  const contact = reactive({ first: '', last: '', mail: '', phone: '' })
   const submitted = ref(null)
-  const activationSent = ref(true)
+  const accessSent = ref(true)
+  const sendingAccess = ref(false)
   const hasDiscount = ref(false)
   const review = ref(false)
   const agencies = ref([])
@@ -972,6 +976,10 @@
         }
       } else {
         newCustomer.value = false
+        if (route.query.potrdi === '1') {
+          await api('confirmorder', { order_id: Number(route.params.id) })
+          await router.replace('/servisi/' + route.params.id)
+        }
         const order = await api('order/' + route.params.id)
         Object.assign(form, order, {
           equipment_ids: (order.equipment_ids || (order.equipment_id ? [order.equipment_id] : [])).map(Number),
@@ -1038,9 +1046,11 @@
       if (isNew) delete payload.agency_commission
       const r = await api(publicMode ? 'book' : 'saveorder', payload)
       q.notify({ type: 'positive', message: t('orders.saved') })
+      if (!publicMode && r.access_sent === false) q.notify({ type: 'negative', message: t('errors.emailFailed') })
       if (publicMode) {
         submitted.value = r.id
-        activationSent.value = r.activation_sent !== false
+        form.confirmation_pending = !!r.confirmation_pending
+        accessSent.value = r.access_sent !== false
       } else if (isNew) await router.replace('/servisi/' + r.id)
       else await load()
     } catch (e) {
@@ -1049,13 +1059,17 @@
       saving.value = false
     }
   }
-  async function resendActivation() {
+  async function resendAccess() {
+    sendingAccess.value = true
     try {
-      await api('resend', { mail: contact.mail })
-      activationSent.value = true
-      q.notify({ type: 'positive', message: t('auth.activationSent') })
+      await api('requestaccess', { mail: contact.mail, order_id: submitted.value })
+      accessSent.value = true
+      q.notify({ type: 'positive', message: t('auth.accessSent') })
     } catch (error) {
+      accessSent.value = false
       q.notify({ type: 'negative', message: error.message })
+    } finally {
+      sendingAccess.value = false
     }
   }
 

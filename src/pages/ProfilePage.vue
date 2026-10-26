@@ -52,6 +52,10 @@
         </p>
         <ErrorBanner :message="saveError" />
         <q-btn unelevated no-caps color="primary" :label="$t('common.saveChanges')" type="submit" :loading="saving" />
+        <q-separator class="q-my-lg" />
+        <p class="text-grey-7">{{ $t('auth.optionalPassword') }}</p>
+        <q-btn outline no-caps color="primary" :label="$t('auth.setPassword')" :loading="sendingPassword" @click="sendPassword" />
+        <p v-if="passwordSent" role="status">{{ $t('auth.resetSent') }}</p>
       </q-form>
     </q-card>
     <template v-else-if="tab === 'commissions'">
@@ -129,6 +133,8 @@
   import ErrorBanner from '../components/ErrorBanner.vue'
   import StatusBadge from '../components/StatusBadge.vue'
   const commissionPeriod = ref('all')
+  const sendingPassword = ref(false)
+  const passwordSent = ref(false)
   const filteredCommissions = computed(() =>
     commissions.value.orders.filter(
       row => commissionPeriod.value === 'all' || row.created_at.startsWith(commissionPeriod.value)
@@ -225,6 +231,16 @@
     } finally {
       saving.value = false
     }
+  }
+  async function sendPassword() {
+    sendingPassword.value = true
+    passwordSent.value = false
+    saveError.value = ''
+    try {
+      await api('reset', { mail: session.user.mail })
+      passwordSent.value = true
+    } catch (e) { saveError.value = e.message }
+    finally { sendingPassword.value = false }
   }
   onMounted(load)
 </script>

@@ -36,6 +36,13 @@
                 :rules="[v => !!v || $t('validation.passwordRequired')]" />
               <ErrorBanner :message="error" />
               <q-btn
+                outline
+                no-caps
+                color="primary"
+                to="/povezava-za-prijavo"
+                :label="$t('auth.emailAccess')"
+                class="full-width" />
+              <q-btn
                 unelevated
                 no-caps
                 color="primary"
@@ -70,10 +77,11 @@
 </template>
 <script setup>
   import { ref } from 'vue'
-  import { useRouter } from 'vue-router'
+  import { useRoute, useRouter } from 'vue-router'
   import { login, session } from '../services/api'
   import LanguageSwitcher from '../components/LanguageSwitcher.vue'
   import ErrorBanner from '../components/ErrorBanner.vue'
+  const route = useRoute()
   const mail = ref(''),
     pass = ref(''),
     loading = ref(false),
@@ -84,7 +92,8 @@
     error.value = ''
     try {
       await login(mail.value, pass.value)
-      await router.push('/servisi')
+      const redirect = route.query.redirect
+      await router.push(typeof redirect === 'string' && /^\/servisi(?:\/\d+)?(?:\?|$)/.test(redirect) ? redirect : '/servisi')
     } catch (e) {
       error.value = e.message
     } finally {

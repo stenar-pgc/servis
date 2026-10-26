@@ -66,6 +66,9 @@
             </div>
             <div v-else class="table-title">{{ $t('equipment.unassigned') }}</div>
             <div class="table-sub">{{ p.row.customer_name || $t('customers.unassigned') }}</div>
+            <q-badge v-if="p.row.confirmation_pending" color="orange-1" text-color="orange-9">
+              {{ $t('orders.confirmationPending') }}
+            </q-badge>
           </q-td>
         </template>
         <template #body-cell-description="p">

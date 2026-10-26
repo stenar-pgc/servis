@@ -15,6 +15,12 @@
       </div>
     </div>
     <ErrorBanner :message="error" retry @retry="load" />
+    <q-banner v-if="kind === 'customers' && rows.some(row => !row.user_id)" class="bg-orange-1 q-mb-md" rounded>
+      {{ $t('customers.prepareHint') }}
+      <template #action>
+        <q-btn flat no-caps color="primary" :label="$t('customers.prepareAccounts')" :loading="saving" @click="previewAccounts" />
+      </template>
+    </q-banner>
     <q-table
       flat
       bordered
@@ -91,6 +97,11 @@
       <template #body-cell-action="p">
         <q-td :props="p">
           <q-btn flat no-caps color="primary" icon="edit" :label="$t('common.edit')" @click="edit(p.row)" />
+          <template v-if="kind === 'customers' && p.row.user_id && p.row.role !== 'admin'">
+            <q-btn flat no-caps color="primary" icon="mail_outline" :label="$t('auth.sendAccess')" :loading="accessBusy === p.row.id" :disable="accessBusy !== null" @click="sendAccess(p.row)" />
+            <q-btn flat no-caps color="negative" icon="link_off" :label="$t('auth.revokeAccess')" @click="revokeAccess(p.row)" />
+          </template>
+          <q-btn v-if="kind === 'customers' && !p.row.user_id" flat no-caps color="primary" icon="link" :label="$t('customers.linkAccount')" @click="openLink(p.row)" />
           <q-btn
             v-if="kind === 'customers' && Number(p.row.id) > 0"
             flat
@@ -109,6 +120,43 @@
         </div>
       </template>
     </q-table>
+    <q-dialog :model-value="!!migration" @update:model-value="value => { if (!value) migration = null }">
+      <q-card class="editor">
+        <q-card-section>
+          <h2>{{ $t('customers.prepareAccounts') }}</h2>
+          <p class="q-mt-md">{{ $t('customers.prepareReview', { count: migration?.ready.length || 0 }) }}</p>
+          <div v-for="row in migration?.ready || []" :key="row.id" class="q-mb-xs">{{ row.name }} · {{ row.mail }}</div>
+          <template v-if="migration?.conflicts.length">
+            <h3 class="q-mt-lg">{{ $t('customers.resolveConflicts') }}</h3>
+            <div v-for="row in migration.conflicts" :key="row.id" class="q-mt-md">
+              <strong>{{ row.name }} · {{ row.mail }}</strong>
+              <div>{{ translateText(row.reason) }}</div>
+            </div>
+          </template>
+          <ErrorBanner :message="migrationError" class="q-mt-md" />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat no-caps :label="$t('common.cancel')" v-close-popup :disable="saving" />
+          <q-btn unelevated no-caps color="primary" :label="$t('customers.prepareAccounts')" :disable="!migration?.ready.length" :loading="saving" @click="prepareAccounts" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+    <q-dialog :model-value="!!linkSource" @update:model-value="value => { if (!value) linkSource = null }">
+      <q-card class="editor">
+        <q-form @submit="linkAccount">
+          <q-card-section class="q-gutter-md">
+            <h2>{{ $t('customers.linkAccount') }}</h2>
+            <p>{{ $t('customers.linkReview', { name: linkSource?.name }) }}</p>
+            <CustomerSelect v-model="linkTarget" :customers="rows.filter(row => row.id !== linkSource?.id)" :label="$t('customers.targetAccount')" outlined :rules="[required]" />
+            <ErrorBanner :message="linkError" />
+          </q-card-section>
+          <q-card-actions align="right">
+            <q-btn flat no-caps :label="$t('common.cancel')" v-close-popup :disable="saving" />
+            <q-btn unelevated no-caps color="primary" type="submit" :label="$t('customers.linkAccount')" :loading="saving" />
+          </q-card-actions>
+        </q-form>
+      </q-card>
+    </q-dialog>
     <q-dialog v-model="editor">
       <q-card class="editor">
         <q-form @submit="save">
@@ -153,17 +201,7 @@
                 emit-value
                 map-options
                 :label="$t('roles.role')" />
-              <q-input
-                outlined
-                dense
-                v-model.number="form.user_id"
-                :readonly="Number(form.id) < 0"
-                type="number"
-                min="1"
-                :label="$t('customers.userId')" />
-              <p class="wide text-caption text-grey-6 q-mb-none">
-                {{ $t('customers.userIdHint') }}
-              </p>
+              <p v-if="!form.id" class="wide text-caption text-grey-6 q-mb-none">{{ $t('auth.automaticAccount') }}</p>
             </template>
             <template v-if="kind === 'agencies'">
               <q-input
@@ -263,11 +301,17 @@
   import { useQuasar } from 'quasar'
   import { useRoute } from 'vue-router'
   import { api, date, money } from '../services/api'
-  import { t } from '../i18n'
+  import { t, translateText } from '../i18n'
   import PostalAddressFields from '../components/PostalAddressFields.vue'
   import CustomerSelect from '../components/CustomerSelect.vue'
   import ErrorBanner from '../components/ErrorBanner.vue'
   const q = useQuasar()
+  const accessBusy = ref(null)
+  const migration = ref(null)
+  const migrationError = ref('')
+  const linkSource = ref(null)
+  const linkTarget = ref(null)
+  const linkError = ref('')
   const kind = useRoute().meta.kind
   const config = {
     customers: {
@@ -388,6 +432,62 @@
       }
     })
   }
+  async function sendAccess(row) {
+    accessBusy.value = row.id
+    error.value = ''
+    try {
+      await api('sendaccess', { id: row.id })
+      q.notify({ type: 'positive', message: t('auth.accessSent') })
+    } catch (e) { error.value = e.message }
+    finally { accessBusy.value = null }
+  }
+  function revokeAccess(row) {
+    q.dialog({
+      title: t('auth.revokeAccess'),
+      message: t('auth.revokeConfirm', { name: row.name }),
+      cancel: { label: t('common.cancel'), flat: true },
+      ok: { label: t('auth.revokeAccess'), color: 'negative' }
+    }).onOk(async () => {
+      try {
+        await api('revokeaccess', { id: row.id })
+        q.notify({ type: 'positive', message: t('auth.accessRevoked') })
+      } catch (e) { error.value = e.message }
+    })
+  }
+  async function previewAccounts() {
+    saving.value = true
+    error.value = ''
+    migrationError.value = ''
+    try { migration.value = await api('accountmigration', { apply: false }) }
+    catch (e) { error.value = e.message }
+    finally { saving.value = false }
+  }
+  async function prepareAccounts() {
+    saving.value = true
+    migrationError.value = ''
+    try {
+      const result = await api('accountmigration', { apply: true })
+      await load()
+      migration.value = result.conflicts.length ? { ready: [], conflicts: result.conflicts } : null
+      q.notify({ type: 'positive', message: t('customers.accountsPrepared', { count: result.converted.length }) })
+    } catch (e) { migrationError.value = e.message }
+    finally { saving.value = false }
+  }
+  function openLink(row) {
+    linkSource.value = row
+    linkTarget.value = null
+    linkError.value = ''
+  }
+  async function linkAccount() {
+    saving.value = true
+    linkError.value = ''
+    try {
+      await api('linkcustomer', { id: linkSource.value.id, customer_id: linkTarget.value })
+      linkSource.value = null
+      await load()
+    } catch (e) { linkError.value = e.message }
+    finally { saving.value = false }
+  }
   function edit(row) {
     for (const key in form) delete form[key]
     Object.assign(
@@ -441,9 +541,10 @@
     saving.value = true
     saveError.value = ''
     try {
-      await api(config.save, form)
+      const result = await api(config.save, form)
       editor.value = false
       await load()
+      if (result.access_sent === false) error.value = t('errors.emailFailed')
     } catch (e) {
       saveError.value = e.message
     } finally {
