@@ -1,7 +1,15 @@
 export default {
   delivery: {
+    shippingAddress: 'Collection and return address',
+    addressHint:
+      'GLS collection and return use the same address. If you arrange shipping yourself, this address is used for the return.',
+    sameAddress: 'Use the address from customer details',
+    missingAddress: 'Enter an address in Your details or choose a different address below.',
+    confirmAddress: 'I confirm that the collection / return address is correct.',
+    confirmRequired: 'Enter and confirm the collection / return address.',
+
     personal: 'I will deliver and collect the equipment in person (Škofja Loka, Dražgoše, on site).',
-    post: 'I will arrange shipping to your address; please return the equipment by post after servicing (+€5).',
+    post: 'I will arrange shipping to your address; please return the equipment by post after servicing (+{price}).',
     gls: 'Please send a GLS courier to collect the equipment from my address and return it by post after servicing (+€10).',
     other: 'Another option.',
     personalLegacy: 'Personal drop-off and collection (Škofja Loka, Dražgoše, on site)',
@@ -277,6 +285,8 @@ export default {
     account: 'Account'
   },
   contact: {
+    country: 'Country',
+    postalAddress: 'Street and house number, postal code and city',
     firstName: 'First name',
     lastName: 'Last name',
     email: 'Email',
@@ -311,6 +321,7 @@ export default {
     sent: 'Documents sent.'
   },
   documents: {
+    files: 'Files',
     removeConfirm: 'Remove this document?',
     remove: 'Remove document',
     equipmentLabel: 'Manufacturer, model, size',

@@ -296,3 +296,17 @@ a {
     padding: 24px 14px;
   }
 }
+
+.equipment-report-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 0.6fr) minmax(0, 1.2fr);
+  gap: 20px;
+
+  > div {
+    min-width: 0;
+  }
+
+  @media (max-width: 900px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -1,7 +1,15 @@
 export default {
   delivery: {
+    shippingAddress: 'Naslov za prevzem in vračilo',
+    addressHint:
+      'Pri GLS prevzem in vračilo potekata na istem naslovu. Pri lastnem pošiljanju ta naslov uporabimo za vračilo.',
+    sameAddress: 'Uporabi naslov iz podatkov stranke',
+    missingAddress: 'V razdelku Vaši podatki vnesite naslov ali spodaj izberite drug naslov.',
+    confirmAddress: 'Potrjujem, da je naslov za prevzem oziroma vračilo pravilen.',
+    confirmRequired: 'Vnesite in potrdite naslov za prevzem oziroma vračilo.',
+
     personal: 'Opremo bom osebno dostavil in prevzel (Škofja Loka, Dražgoše, teren).',
-    post: 'Sam bom organiziral pošiljanje opreme na vaš naslov, po servisu mi jo vrnite po pošti (+5 €).',
+    post: 'Sam bom organiziral pošiljanje opreme na vaš naslov, po servisu mi jo vrnite po pošti (+{price}).',
     gls: 'Pošljite GLS kurirja na moj naslov za prevzem opreme, po servisu mi jo vrnite po pošti (+10 €).',
     other: 'Druga možnost.',
     personalLegacy: 'Osebna dostava in prevzem (Škofja Loka, Dražgoše, teren)',
@@ -276,6 +284,8 @@ export default {
     account: 'Uporabniški račun'
   },
   contact: {
+    country: 'Država',
+    postalAddress: 'Ulica in hišna številka, poštna številka in kraj',
     firstName: 'Ime',
     lastName: 'Priimek',
     email: 'E-pošta',
@@ -310,6 +320,7 @@ export default {
     sent: 'Dokumenti so poslani.'
   },
   documents: {
+    files: 'Datoteke',
     removeConfirm: 'Želite odstraniti dokument?',
     remove: 'Odstrani dokument',
     equipmentLabel: 'Proizvajalec, model, velikost',

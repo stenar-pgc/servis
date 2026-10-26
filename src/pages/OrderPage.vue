@@ -133,7 +133,6 @@
                       :label="$t('contact.email') + ' *'"
                       :rules="[required]" />
                     <q-input outlined v-model="newContact.phone" :label="$t('contact.phone')" />
-                    <q-input outlined v-model="newContact.address" :label="$t('contact.address')" class="wide" />
                   </div>
                   <q-select
                     v-else
@@ -168,6 +167,15 @@
                     to="/profil"
                     icon="edit"
                     :label="$t('profile.title')" />
+                </div>
+                <div class="form-grid q-mt-lg">
+                  <q-input
+                    outlined
+                    v-model="form.contact_address"
+                    :label="$t('contact.postalAddress')"
+                    :readonly="readonly"
+                    class="wide" />
+                  <CountrySelect v-model="form.contact_country" :readonly="readonly" />
                 </div>
                 <q-checkbox
                   v-if="!readonly"
@@ -207,6 +215,40 @@
                   :options="translatedDeliveries"
                   :disable="readonly"
                   color="primary" />
+                <div v-if="postalDelivery" class="q-mt-lg">
+                  <div class="text-weight-medium">{{ $t('delivery.shippingAddress') }}</div>
+                  <p class="text-caption text-grey-7 q-mt-xs">{{ $t('delivery.addressHint') }}</p>
+                  <q-checkbox
+                    v-model="form.shipping_same_address"
+                    :label="$t('delivery.sameAddress')"
+                    :disable="readonly" />
+                  <div v-if="form.shipping_same_address" class="q-my-sm">
+                    <div>{{ form.contact_address || $t('delivery.missingAddress') }}</div>
+                    <div>{{ countryName(form.contact_country) }}</div>
+                  </div>
+                  <div v-else class="form-grid q-mt-md">
+                    <q-input
+                      outlined
+                      v-model="form.shipping_address"
+                      :label="$t('contact.postalAddress')"
+                      :rules="session.user?.admin ? [] : [required]"
+                      :readonly="readonly"
+                      class="wide" />
+                    <CountrySelect v-model="form.shipping_country" :readonly="readonly" />
+                  </div>
+                  <q-field
+                    borderless
+                    dense
+                    :model-value="confirmedAddress"
+                    :rules="session.user?.admin || readonly ? [] : [v => v || $t('delivery.confirmRequired')]">
+                    <template #control>
+                      <q-checkbox
+                        v-model="form.shipping_confirmed"
+                        :label="$t('delivery.confirmAddress')"
+                        :disable="readonly" />
+                    </template>
+                  </q-field>
+                </div>
                 <q-input
                   v-if="form.delivery === 'other'"
                   outlined
@@ -333,57 +375,100 @@
                 @click="addEquipment" />
             </div>
             <div v-if="!orderEquipment.length" class="text-grey-7">{{ $t('equipment.noneRegistered') }}</div>
-            <div v-for="item in orderEquipment" :key="item.id" class="service-item q-mb-md">
-              <div class="row items-start">
-                <div class="col">
-                  <strong>{{ equipmentLabel(item) }}</strong>
-                  <div class="text-caption text-grey-7">{{ translateText(item.type) }} · {{ item.serial || '—' }}</div>
+            <div v-for="item in orderEquipment" :key="item.id" class="service-item equipment-report-row q-mb-md">
+              <div>
+                <div class="text-caption text-grey-7 q-mb-sm">{{ $t('equipment.title') }}</div>
+                <div class="row items-start no-wrap">
+                  <div class="col">
+                    <strong>{{ equipmentLabel(item) }}</strong>
+                    <div class="text-caption text-grey-7">
+                      {{ translateText(item.type) }} · {{ item.serial || '—' }}
+                    </div>
+                  </div>
+                  <template v-if="session.user?.admin">
+                    <q-btn
+                      flat
+                      round
+                      dense
+                      icon="edit"
+                      color="primary"
+                      :aria-label="$t('equipment.edit')"
+                      @click="editEquipment(item)" />
+                    <q-btn
+                      flat
+                      round
+                      dense
+                      icon="close"
+                      :aria-label="$t('equipment.removeFromOrder')"
+                      :disable="reportsFor(item.id).length > 0"
+                      @click="detachEquipment(item.id)">
+                      <q-tooltip v-if="reportsFor(item.id).length">{{ $t('errors.removeEquipmentReports') }}</q-tooltip>
+                    </q-btn>
+                  </template>
+                </div>
+              </div>
+              <div>
+                <div class="text-caption text-grey-7 q-mb-sm">{{ $t('documents.reference') }}</div>
+                <div v-for="number in reportReferences(item.id)" :key="number" class="q-mb-sm">{{ number }}</div>
+                <q-input
+                  v-if="session.user?.admin"
+                  outlined
+                  dense
+                  v-model="reportNumbers[item.id]"
+                  :label="$t('documents.reference')" />
+                <div v-else-if="!reportReferences(item.id).length">—</div>
+              </div>
+              <div>
+                <div class="text-caption text-grey-7 q-mb-sm">{{ $t('documents.files') }}</div>
+                <DocumentFiles
+                  :files="reportsFor(item.id)"
+                  :editable="session.user?.admin"
+                  @download="download"
+                  @remove="removeDocument" />
+                <div v-if="!reportsFor(item.id).length" class="text-caption text-grey-7 q-mb-sm">
+                  {{ $t('documents.noReport') }}
                 </div>
                 <template v-if="session.user?.admin">
+                  <q-file
+                    outlined
+                    dense
+                    multiple
+                    v-model="reportFiles[item.id]"
+                    accept="application/pdf,.pdf"
+                    :max-file-size="10485760"
+                    :label="$t('documents.choosePdf')"
+                    :disable="isNew || !savedEquipmentIds.includes(Number(item.id)) || uploading"
+                    class="q-mt-sm"
+                    @rejected="documentError = t('errors.pdfSize')" />
                   <q-btn
                     flat
-                    round
-                    dense
-                    icon="edit"
+                    no-caps
                     color="primary"
-                    :aria-label="$t('equipment.edit')"
-                    @click="editEquipment(item)" />
-                  <q-btn
-                    flat
-                    round
-                    dense
-                    icon="close"
-                    :aria-label="$t('equipment.removeFromOrder')"
-                    :disable="reportsFor(item.id).length > 0"
-                    @click="detachEquipment(item.id)">
-                    <q-tooltip v-if="reportsFor(item.id).length">{{ $t('errors.removeEquipmentReports') }}</q-tooltip>
-                  </q-btn>
+                    icon="upload_file"
+                    :label="$t('documents.addReport')"
+                    :disable="
+                      isNew ||
+                      !savedEquipmentIds.includes(Number(item.id)) ||
+                      !reportFiles[item.id]?.length ||
+                      uploading
+                    "
+                    class="q-mt-sm"
+                    @click="uploadReports(item.id)" />
+                  <div v-if="isNew || !savedEquipmentIds.includes(Number(item.id))" class="text-caption text-grey-7">
+                    {{ $t('equipment.saveForReport') }}
+                  </div>
                 </template>
               </div>
-              <DocumentFiles
-                :files="reportsFor(item.id)"
-                :editable="session.user?.admin"
-                @download="download"
-                @remove="removeDocument" />
-              <div v-if="!reportsFor(item.id).length" class="text-caption text-grey-7 q-mt-md">
-                {{ $t('documents.noReport') }}
-              </div>
-              <q-btn
-                v-if="session.user?.admin"
-                flat
-                no-caps
-                color="primary"
-                icon="upload_file"
-                :label="$t('documents.addReport')"
-                :disable="isNew || !savedEquipmentIds.includes(Number(item.id))"
-                class="q-mt-sm"
-                @click="openUpload('report', item.id)" />
-              <div
-                v-if="session.user?.admin && (isNew || !savedEquipmentIds.includes(Number(item.id)))"
-                class="text-caption text-grey-7">
-                {{ $t('equipment.saveForReport') }}
-              </div>
             </div>
+            <q-btn
+              v-if="session.user?.admin"
+              flat
+              no-caps
+              color="primary"
+              icon="add_circle_outline"
+              :label="$t('equipment.addExisting')"
+              class="q-mb-md"
+              @click="chooseEquipment" />
             <template v-if="unassignedReports.length">
               <h3 class="text-subtitle1">{{ $t('documents.unassignedReports') }}</h3>
               <div v-for="doc in unassignedReports" :key="doc.id" class="q-mb-md">
@@ -534,6 +619,11 @@
             <div>
               {{ orderEquipment.map(equipmentLabel).join(', ') || $t('equipment.unassigned') }}
             </div>
+            <div v-if="postalDelivery" class="q-mt-sm">
+              <strong>{{ $t('delivery.shippingAddress') }}</strong>
+              <div>{{ returnAddress }}</div>
+              <div>{{ countryName(returnCountry) }}</div>
+            </div>
             <p class="q-mb-none q-mt-sm">{{ form.description }}</p>
           </div>
           <ErrorBanner :message="saveError" />
@@ -597,7 +687,7 @@
   </q-page>
 </template>
 <script setup>
-  import { computed, nextTick, onMounted, reactive, ref } from 'vue'
+  import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import { useQuasar } from 'quasar'
   import {
@@ -612,6 +702,8 @@
     statuses
   } from '../services/api'
   import { t, i18n, translateText } from '../i18n'
+  import CountrySelect from '../components/CountrySelect.vue'
+  import { postalRate } from '../services/shipping'
   import ErrorBanner from '../components/ErrorBanner.vue'
   import EquipmentEditor from '../components/EquipmentEditor.vue'
   import DocumentFiles from '../components/DocumentFiles.vue'
@@ -631,6 +723,12 @@
     status: 'submitted',
     delivery: 'personal',
     delivery_note: '',
+    contact_address: '',
+    contact_country: 'SI',
+    shipping_same_address: true,
+    shipping_address: '',
+    shipping_country: 'SI',
+    shipping_confirmed: false,
     payment_method: 'pickup',
     english_report: false,
     discount_code: '',
@@ -663,7 +761,7 @@
     acceptedPrices = ref({})
   const newCustomer = ref(false)
   const customerId = ref(null)
-  const newContact = reactive({ name: '', mail: '', phone: '', address: '' })
+  const newContact = reactive({ name: '', mail: '', phone: '' })
   const contact = reactive({ first: '', last: '', mail: '', phone: '', create_account: true })
   const submitted = ref(null)
   const activationSent = ref(true)
@@ -675,6 +773,15 @@
   const reportEquipmentId = ref(null)
   const savedEquipmentIds = ref([])
   const reportAssignments = reactive({})
+  const reportNumbers = reactive({})
+  const reportFiles = reactive({})
+  const reportReferences = id => [
+    ...new Set(
+      reportsFor(id)
+        .map(doc => doc.report_number)
+        .filter(Boolean)
+    )
+  ]
   const orderEquipment = computed(() =>
     form.equipment_ids.map(id => equipment.value.find(item => Number(item.id) === Number(id))).filter(Boolean)
   )
@@ -741,6 +848,12 @@
     form.equipment_ids = form.equipment_ids.filter(value => Number(value) !== Number(id))
   }
 
+  function chooseEquipment() {
+    equipmentSelect.value?.$el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    equipmentSelect.value?.focus()
+    equipmentSelect.value?.showPopup()
+  }
+
   function addEquipment() {
     equipmentToEdit.value = null
     equipmentSelect.value?.hidePopup()
@@ -757,7 +870,45 @@
       customers.value.find(item => Number(item.id) === Number(customerId.value)) ||
       (!session.user?.admin ? session.user : null)
   )
-  const translatedDeliveries = computed(() => deliveries.map(d => ({ ...d, label: t(d.label) })))
+  const countryName = code => new Intl.DisplayNames([i18n.global.locale.value], { type: 'region' }).of(code || 'SI')
+  const postalDelivery = computed(() => ['post', 'gls'].includes(form.delivery))
+  const returnCountry = computed(() => (form.shipping_same_address ? form.contact_country : form.shipping_country))
+  const returnAddress = computed(() => (form.shipping_same_address ? form.contact_address : form.shipping_address))
+  const confirmedAddress = computed(() => form.shipping_confirmed && !!returnAddress.value.trim())
+  watch(
+    customerId,
+    () => {
+      if (loading.value) return
+      form.contact_address = owner.value?.address || ''
+      form.contact_country = owner.value?.country || 'SI'
+    },
+    { flush: 'sync' }
+  )
+  watch(newCustomer, value => {
+    if (loading.value) return
+    form.contact_address = value ? '' : owner.value?.address || ''
+    form.contact_country = value ? 'SI' : owner.value?.country || 'SI'
+  })
+  watch(
+    () => [
+      form.contact_address,
+      form.contact_country,
+      form.shipping_address,
+      form.shipping_country,
+      form.shipping_same_address,
+      form.delivery
+    ],
+    () => {
+      if (!loading.value) form.shipping_confirmed = false
+    },
+    { flush: 'sync' }
+  )
+  const translatedDeliveries = computed(() =>
+    deliveries.map(d => ({
+      ...d,
+      label: t(d.label, { price: money(postalRate(returnCountry.value)) })
+    }))
+  )
   const translatedPayments = computed(() => paymentMethods.map(p => ({ ...p, label: t(p.label) })))
   const translatedStatuses = computed(() => statuses.map(s => ({ ...s, label: t(s.label) })))
   const price = item => Number(acceptedPrices.value[item.code] ?? item.price)
@@ -766,7 +917,9 @@
       .filter(i => Number(form.quantities[i.code]) > 0)
       .map(i => ({ ...i, quantity: Number(form.quantities[i.code]) }))
   )
-  const shipping = computed(() => (form.delivery === 'post' ? 5 : form.delivery === 'gls' ? 10 : 0))
+  const shipping = computed(() =>
+    form.delivery === 'post' ? postalRate(returnCountry.value) : form.delivery === 'gls' ? 10 : 0
+  )
   const total = computed(
     () =>
       selectedItems.value.reduce((s, i) => s + i.quantity * price(i), 0) +
@@ -789,13 +942,21 @@
       agencies.value = result[3]
       for (const item of catalog.value) form.quantities[item.code] = 0
       if (isNew) {
+        form.contact_address = session.user?.admin ? '' : session.user?.address || ''
+        form.contact_country = session.user?.admin ? 'SI' : session.user?.country || 'SI'
         form.equipment_ids = route.query.equipment ? [Number(route.query.equipment)] : []
         customerId.value = orderEquipment.value[0]?.customer_id || null
+        if (customerId.value) {
+          form.contact_address = owner.value?.address || ''
+          form.contact_country = owner.value?.country || 'SI'
+        }
       } else {
         newCustomer.value = false
         const order = await api('order/' + route.params.id)
         Object.assign(form, order, {
           equipment_ids: (order.equipment_ids || (order.equipment_id ? [order.equipment_id] : [])).map(Number),
+          shipping_same_address: order.shipping_same_address == null || !!Number(order.shipping_same_address),
+          shipping_confirmed: !!Number(order.shipping_confirmed),
           english_report: !!Number(order.english_report),
           finance_complete: !!Number(order.finance_complete),
           discount_code: ''
@@ -834,10 +995,20 @@
       const payload = { ...form }
       if (session.user?.admin) payload.customer_id = customerId.value
       if (publicMode) {
-        payload.contact = { ...contact, language: i18n.global.locale.value }
+        payload.contact = {
+          ...contact,
+          address: form.contact_address,
+          country: form.contact_country,
+          language: i18n.global.locale.value
+        }
       }
       if (newCustomer.value) {
-        payload.new_customer = { ...newContact, language: i18n.global.locale.value }
+        payload.new_customer = {
+          ...newContact,
+          address: form.contact_address,
+          country: form.contact_country,
+          language: i18n.global.locale.value
+        }
         payload.equipment_ids = [...form.equipment_ids]
       }
       if (isNew) delete payload.agency_commission
@@ -892,6 +1063,18 @@
     }
   }
 
+  async function uploadReports(equipmentId) {
+    const files = [...(reportFiles[equipmentId] || [])]
+    uploadKind.value = 'report'
+    reportEquipmentId.value = equipmentId
+    reportNumber.value = reportNumbers[equipmentId] || reportReferences(equipmentId)[0] || ''
+    for (const file of files) {
+      uploadFile.value = file
+      if (!(await upload())) return
+      reportFiles[equipmentId] = reportFiles[equipmentId].filter(item => item !== file)
+    }
+  }
+
   async function upload() {
     if (!uploadFile.value) return
     uploading.value = true
@@ -911,6 +1094,7 @@
       documents.value = (await api('order/' + form.id)).documents
       uploadFile.value = null
       documentEditor.value = false
+      return true
     } catch (e) {
       documentError.value = e.message
     } finally {
