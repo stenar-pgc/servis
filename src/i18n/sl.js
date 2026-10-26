@@ -157,6 +157,9 @@ export default {
     dash: '—'
   },
   errors: {
+    chooseExistingCustomer: 'Obstoječo Niceclouds stranko izberite iz seznama.',
+    sharedCustomerDelete: 'Niceclouds uporabnikov ni mogoče izbrisati v servisu.',
+    accessDenied: 'Dostop ni dovoljen.',
     customerHasRecords: 'Stranke z opremo, servisi ali agencijo ni mogoče izbrisati.',
     accountExists: 'E-pošta že ima račun. Prijavite se ali ponastavite geslo.',
     activationExpired: 'Povezava je potekla. Ponovno pošljite aktivacijsko e-pošto.',

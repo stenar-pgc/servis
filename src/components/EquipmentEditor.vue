@@ -35,16 +35,12 @@
             v-model="form.serial"
             :label="$t('equipment.serial') + (session.user.admin ? '' : ' *')"
             :rules="session.user.admin ? [] : [required]" />
-          <q-select
+          <CustomerSelect
             v-if="session.user.admin"
             outlined
             dense
             v-model="form.customer_id"
-            :options="customers"
-            option-label="name"
-            option-value="id"
-            emit-value
-            map-options
+            :customers="customers"
             :label="$t('equipment.owner')"
             :hint="$t('equipment.ownerOptional')"
             clearable
@@ -97,6 +93,7 @@
   </q-dialog>
 </template>
 <script setup>
+  import CustomerSelect from './CustomerSelect.vue'
   import { reactive, ref, watch } from 'vue'
   import { api, equipmentTypes, session } from '../services/api'
   import { t, translateText } from '../i18n'

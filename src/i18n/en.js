@@ -157,6 +157,9 @@ export default {
     dash: '—'
   },
   errors: {
+    chooseExistingCustomer: 'Select the existing Niceclouds customer from the list.',
+    sharedCustomerDelete: 'Niceclouds users cannot be deleted from Servis.',
+    accessDenied: 'Access is not allowed.',
     customerHasRecords: 'A customer with equipment, service orders or an agency cannot be deleted.',
     accountExists: 'This email already has an account. Sign in or reset your password.',
     activationExpired: 'This link has expired. Resend the activation email.',

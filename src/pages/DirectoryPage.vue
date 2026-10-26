@@ -21,7 +21,7 @@
       :rows="filtered"
       :columns="columns"
       :loading="loading"
-      :filter="search"
+      :filter="kind === 'customers' ? '' : search"
       :pagination="{ rowsPerPage: 10 }"
       row-key="id">
       <template #top>
@@ -92,7 +92,7 @@
         <q-td :props="p">
           <q-btn flat no-caps color="primary" icon="edit" :label="$t('common.edit')" @click="edit(p.row)" />
           <q-btn
-            v-if="kind === 'customers'"
+            v-if="kind === 'customers' && Number(p.row.id) > 0"
             flat
             no-caps
             color="negative"
@@ -145,6 +145,7 @@
                 outlined
                 dense
                 v-model="form.role"
+                :disable="Number(form.id) < 0"
                 :options="[
                   { value: 'customer', label: $t('roles.customer') },
                   { value: 'admin', label: $t('roles.admin') }
@@ -156,6 +157,7 @@
                 outlined
                 dense
                 v-model.number="form.user_id"
+                :readonly="Number(form.id) < 0"
                 type="number"
                 min="1"
                 :label="$t('customers.userId')" />
@@ -171,15 +173,11 @@
                 :label="$t('agencies.name') + ' *'"
                 class="wide"
                 :rules="[required]" />
-              <q-select
+              <CustomerSelect
                 outlined
                 dense
                 v-model="form.customer_id"
-                :options="customers"
-                option-label="name"
-                option-value="id"
-                emit-value
-                map-options
+                :customers="customers"
                 :label="$t('agencies.contact') + ' *'"
                 class="wide"
                 :rules="[required]" />
@@ -267,6 +265,7 @@
   import { api, date, money } from '../services/api'
   import { t } from '../i18n'
   import PostalAddressFields from '../components/PostalAddressFields.vue'
+  import CustomerSelect from '../components/CustomerSelect.vue'
   import ErrorBanner from '../components/ErrorBanner.vue'
   const q = useQuasar()
   const kind = useRoute().meta.kind
@@ -313,6 +312,13 @@
     rows.value.filter(
       r =>
         (!agencyFilter.value || r.agency_id == agencyFilter.value) &&
+        (kind !== 'customers' ||
+          !search.value ||
+          [r.name, r.mail, r.phone].some(value =>
+            String(value || '')
+              .toLocaleLowerCase()
+              .includes(search.value.toLocaleLowerCase())
+          )) &&
         (kind !== 'customers' ||
           accountFilter.value === 'all' ||
           (accountFilter.value === 'registered' ? !!r.user_id : !r.user_id))

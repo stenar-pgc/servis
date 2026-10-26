@@ -130,15 +130,11 @@
                       :rules="[required]" />
                     <q-input outlined v-model="newContact.phone" :label="$t('contact.phone')" />
                   </div>
-                  <q-select
+                  <CustomerSelect
                     v-else
                     v-model="customerId"
                     outlined
-                    :options="customers"
-                    option-label="name"
-                    option-value="id"
-                    emit-value
-                    map-options
+                    :customers="customers"
                     clearable
                     :label="$t('customers.customer')"
                     :hint="$t('customers.assignLater')" />
@@ -697,6 +693,7 @@
   import { t, i18n, translateText } from '../i18n'
   import PostalAddressFields from '../components/PostalAddressFields.vue'
   import { postalRate } from '../services/shipping'
+  import CustomerSelect from '../components/CustomerSelect.vue'
   import ErrorBanner from '../components/ErrorBanner.vue'
   import EquipmentEditor from '../components/EquipmentEditor.vue'
   import DocumentFiles from '../components/DocumentFiles.vue'
