@@ -399,6 +399,8 @@
                     </q-btn>
                   </template>
                 </div>
+                <q-btn v-if="session.user?.admin && savedEquipmentOptions.some(option => Number(option.value) === Number(item.id))" flat dense no-caps icon="straighten" color="primary" class="q-mt-sm" :label="$t('inspection.title')" :to="`/servisi/${form.id}/meritve/${item.id}`" />
+                <q-btn v-if="session.user?.admin && savedEquipmentOptions.some(option => Number(option.value) === Number(item.id))" flat dense no-caps icon="table_view" color="primary" class="q-mt-sm" :label="$t('inspection.importTitle')" @click="inspectionImportEquipment = item" />
               </div>
               <div>
                 <div class="text-caption text-grey-7 q-mb-sm">{{ $t('documents.reference') }}</div>
@@ -700,6 +702,7 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+    <InspectionImportDialog v-if="inspectionImportEquipment" :order-id="form.id" :equipment="inspectionImportEquipment" @close="inspectionImportEquipment = null" @imported="load" />
     <EquipmentEditor
       v-if="!publicMode"
       v-model="equipmentEditor"
@@ -731,6 +734,7 @@
   import CustomerSelect from '../components/CustomerSelect.vue'
   import ErrorBanner from '../components/ErrorBanner.vue'
   import EquipmentEditor from '../components/EquipmentEditor.vue'
+  import InspectionImportDialog from '../components/InspectionImportDialog.vue'
   import DocumentFiles from '../components/DocumentFiles.vue'
   import StatusBadge from '../components/StatusBadge.vue'
   import ServiceSelector from '../components/ServiceSelector.vue'
@@ -816,6 +820,7 @@
   const reportEquipmentId = ref(null)
   const savedEquipmentIds = ref([])
   const reportAssignments = reactive({})
+  const inspectionImportEquipment = ref(null)
   const reportNumbers = reactive({})
   const reportFiles = reactive({})
   const reportReferences = id => [
