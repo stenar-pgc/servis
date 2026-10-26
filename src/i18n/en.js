@@ -280,7 +280,14 @@ export default {
     login: 'Sign in',
     legacyLoginHint:
       'Sign in with your existing Niceclouds account. Contact the workshop for access or to link existing equipment.',
-    forgotPassword: 'Forgot your password? Open Niceclouds',
+    forgotPassword: 'Forgot your password?',
+    resetTitle: 'Reset password',
+    resetHint: 'Enter your account email address to receive a link to set a new password.',
+    sendReset: 'Send reset link',
+    resetSent: 'If an account exists for this email address, you will receive a password reset link.',
+    savePassword: 'Save new password',
+    requestNewLink: 'Request a new link',
+    resetExpired: 'This link has expired. Request a new password reset link.',
     footer: 'Stenar · Equipment cared for. Peace of mind in the air.',
     account: 'Account'
   },

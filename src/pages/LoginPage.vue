@@ -55,13 +55,9 @@
               <p class="text-caption text-grey-7 q-mb-none">
                 {{ $t('auth.loginHint') }}
               </p>
-              <a
-                href="https://app.niceclouds.si/lostpass"
-                target="_blank"
-                rel="noopener"
-                class="text-caption text-primary">
+              <router-link to="/pozabljeno-geslo" class="text-caption text-primary">
                 {{ $t('auth.forgotPassword') }}
-              </a>
+              </router-link>
             </q-form>
           </q-card>
           <p class="text-center text-caption text-grey-6 q-mt-lg">

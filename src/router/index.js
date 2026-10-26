@@ -9,6 +9,18 @@ export default defineRouter(() => {
     routes: [
       { path: '/prijava', component: () => import('../pages/LoginPage.vue') },
       {
+        path: '/pozabljeno-geslo',
+        component: () => import('../layouts/PublicLayout.vue'),
+        meta: { public: true },
+        children: [{ path: '', component: () => import('../pages/PasswordResetPage.vue') }]
+      },
+      {
+        path: '/ponastavitev/:uid/:token',
+        component: () => import('../layouts/PublicLayout.vue'),
+        meta: { public: true },
+        children: [{ path: '', component: () => import('../pages/PasswordResetPage.vue') }]
+      },
+      {
         path: '/registracija',
         component: () => import('../layouts/PublicLayout.vue'),
         meta: { public: true },

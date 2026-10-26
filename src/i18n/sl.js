@@ -279,7 +279,14 @@ export default {
     login: 'Prijava',
     legacyLoginHint:
       'Prijava z obstoječim računom Niceclouds. Za dostop ali povezavo obstoječe opreme se obrnite na servis.',
-    forgotPassword: 'Pozabljeno geslo? Odpri Niceclouds',
+    forgotPassword: 'Pozabljeno geslo?',
+    resetTitle: 'Ponastavitev gesla',
+    resetHint: 'Vnesite e-poštni naslov svojega računa. Prejeli boste povezavo za nastavitev novega gesla.',
+    sendReset: 'Pošlji povezavo',
+    resetSent: 'Če za ta e-poštni naslov obstaja račun, boste prejeli povezavo za ponastavitev gesla.',
+    savePassword: 'Shrani novo geslo',
+    requestNewLink: 'Zahtevaj novo povezavo',
+    resetExpired: 'Povezava je potekla. Zahtevajte novo povezavo za ponastavitev gesla.',
     footer: 'Stenar · Skrb za opremo. Mirna glava v zraku.',
     account: 'Uporabniški račun'
   },
