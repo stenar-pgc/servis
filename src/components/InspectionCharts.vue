@@ -7,7 +7,7 @@
           <img src="/inspection-wing.png" alt="" />
           <div class="porosity-points"><div v-for="point in porosity" :key="point.index"><small>{{ point.index }} m</small><strong :style="{ background: porosityColor(point.value) }">{{ point.value == null ? '—' : point.value >= 800 ? '800+' : point.value }}<small v-if="point.value != null"> s</small></strong></div></div>
         </div>
-        <div class="row q-gutter-lg q-mt-sm"><div><small>{{ $t('inspection.average') }}</small><div class="text-h6">{{ number(calc.safe('Vnos podatkov', 'E14')) }} s</div></div><div><small>{{ $t('inspection.minimum') }}</small><div class="text-h6">{{ number(calc.safe('Vnos podatkov', 'E15')) }} s</div></div></div>
+        <div class="row q-gutter-lg q-mt-sm"><div><small>{{ $t('inspection.average') }}</small><div class="text-h6">{{ number(hasPorosity ? calc.safe('Vnos podatkov', 'E14') : null) }} s</div></div><div><small>{{ $t('inspection.minimum') }}</small><div class="text-h6">{{ number(hasPorosity ? calc.safe('Vnos podatkov', 'E15') : null) }} s</div></div></div>
       </section>
       <section class="col-12 col-lg-6">
         <h2>{{ $t('inspection.condition') }}</h2>
@@ -52,8 +52,15 @@ const groups = computed(() => props.layout === 'F' ? ['A','B','C','D','E','F','B
 const lineCount = computed(() => props.layout === 'F' ? 25 : 23)
 const positions = computed(() => [...Array.from({ length: lineCount.value }, (_, i) => ({ side: 'right', index: lineCount.value - i })), ...Array.from({ length: lineCount.value }, (_, i) => ({ side: 'left', index: i + 1 }))])
 const porosity = computed(() => Array.from({ length: 8 }, (_, index) => ({ index, value: props.values['Vnos podatkov!B' + (14 + index)] })))
+const hasPorosity = computed(() => porosity.value.some(point => typeof point.value === 'number'))
 const ratingCalc = computed(() => inspectionCalculator(inspectionRatingValues(props.values, props.layout)))
-const ratings = computed(() => ['canopyRating','linesRating','age','porosity','equalizing','overall'].map((label, i) => ({ label, cell: 'F' + (23+i), value: ratingCalc.value.safe('Vnos podatkov', 'F' + (23+i)) })))
+const ratings = computed(() => {
+  const values = inspectionRatingValues(props.values, props.layout)
+  const offset = values['Vnos podatkov!B25'] === 'ne' || values['Vnos podatkov!B29'] !== 'da' ? 'A!AB28' : 'kontrolna meritev!AB28'
+  const available = [typeof values['Vnos podatkov!B26'] === 'number', typeof values['Vnos podatkov!B27'] === 'number', Boolean(values['Vnos podatkov!B1'] && values['Vnos podatkov!B10']), hasPorosity.value, typeof values[offset] === 'number']
+  available.push(available.every(Boolean))
+  return ['canopyRating','linesRating','age','porosity','equalizing','overall'].map((label, i) => ({ label, cell: 'F' + (23+i), value: available[i] ? ratingCalc.value.safe('Vnos podatkov', 'F' + (23+i)) : null }))
+})
 const number = (value, precision = 1) => typeof value === 'number' && Number.isFinite(value) ? Number(value.toFixed(precision)) : '—'
 function deviation(sheet, side, axis, index) {
   // No reading is different from a zero deviation; do not visualize an inferred measurement.
