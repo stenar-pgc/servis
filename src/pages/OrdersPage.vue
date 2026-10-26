@@ -2,20 +2,22 @@
   <q-page class="page">
     <div class="page-heading">
       <div>
-        <div class="eyebrow">STENAR SERVIS</div>
+
         <h1>{{ $t(session.user.admin ? 'orders.adminTitle' : 'orders.myServices') }}</h1>
         <p>{{ $t('orders.subtitle') }}</p>
       </div>
       <q-btn color="primary" unelevated no-caps icon="add" :label="$t('orders.new')" to="/servisi/novo" />
     </div>
     <div class="stats">
-      <div v-for="stat in stats" :key="stat.label" class="stat-card">
-        <div class="row items-center justify-between">
-          <span class="text-grey-7">{{ $t(stat.label) }}</span>
-          <q-icon :name="stat.icon" size="19px" />
-        </div>
-        <div class="number">{{ stat.count }}</div>
-      </div>
+      <SummaryCard
+        v-for="stat in stats"
+        :key="stat.value"
+        :label="$t(stat.label)"
+        :count="stat.count"
+        :icon="stat.icon"
+        :icon-class="stat.color"
+        :active="filter === stat.value"
+        @select="selectFilter(stat.value)" />
     </div>
     <ErrorBanner :message="error" retry @retry="load" />
     <q-card flat bordered>
@@ -97,7 +99,12 @@
         </template>
         <template #body-cell-action="p">
           <q-td :props="p">
-            <q-btn flat round dense icon="arrow_forward" :to="'/servisi/' + p.row.id" :aria-label="$t('orders.open')" />
+            <q-btn flat round dense icon="arrow_forward" :to="'/servisi/' + p.row.id" :aria-label="$t('orders.open')">
+              <q-tooltip>{{ $t('orders.open') }}</q-tooltip>
+            </q-btn>
+            <q-btn v-if="session.user.admin" flat round dense color="negative" icon="delete_outline" :aria-label="$t('orders.delete')" :disable="deleting" @click.stop="removeOrder(p.row.id)">
+              <q-tooltip>{{ $t('orders.delete') }}</q-tooltip>
+            </q-btn>
           </q-td>
         </template>
         <template #no-data>
@@ -114,10 +121,25 @@
 <script setup>
   import { computed, onMounted, ref } from 'vue'
   import { useRouter } from 'vue-router'
+  import { useQuasar } from 'quasar'
+  import { confirmDeletion } from '../services/deletion'
   import { api, date, orderNumber, session, statuses } from '../services/api'
   import { t } from '../i18n'
   import ErrorBanner from '../components/ErrorBanner.vue'
   import StatusBadge from '../components/StatusBadge.vue'
+  import SummaryCard from '../components/SummaryCard.vue'
+  const q = useQuasar()
+  const deleting = ref(false)
+  function removeOrder(id) {
+    confirmDeletion(q, {
+      title: t('orders.delete'),
+      message: t('orders.deleteConfirm', { number: orderNumber(id) }),
+      action: () => api('deleteorder', { id }),
+      onDeleted: () => { rows.value = rows.value.filter(row => row.id !== id) },
+      onError: message => { error.value = message },
+      busy: deleting
+    })
+  }
   const rows = ref([]),
     search = ref(''),
     filter = ref('all'),
@@ -126,23 +148,33 @@
     router = useRouter()
   const filtered = computed(() => rows.value.filter(r => filter.value === 'all' || r.status === filter.value))
   const stats = computed(() => [
-    { label: 'orders.all', icon: 'inventory_2', count: rows.value.length },
+    { value: 'all', label: 'orders.all', icon: 'inventory_2', color: 'bg-light-blue-1 text-primary', count: rows.value.length },
     {
+      value: 'submitted',
       label: 'statuses.awaitingArrival',
       icon: 'schedule',
+      color: 'bg-orange-1 text-orange-9',
       count: rows.value.filter(r => r.status === 'submitted').length
     },
     {
+      value: 'in_service',
       label: 'statuses.inService',
       icon: 'build',
+      color: 'bg-blue-1 text-blue-8',
       count: rows.value.filter(r => r.status === 'in_service').length
     },
     {
+      value: 'completed',
       label: 'statuses.completedServices',
       icon: 'task_alt',
+      color: 'bg-light-blue-1 text-primary',
       count: rows.value.filter(r => r.status === 'completed').length
     }
   ])
+  function selectFilter(value) {
+    filter.value = value
+    search.value = ''
+  }
   const columns = computed(() => [
     { name: 'id', label: t('orders.order'), field: 'id', align: 'left', sortable: true },
     {

@@ -2,20 +2,23 @@
   <q-page class="page">
     <div class="page-heading">
       <div>
-        <div class="eyebrow">{{ $t('navigation.administration') }}</div>
+
         <h1>{{ $t(config.title) }}</h1>
         <p>{{ $t(config.subtitle) }}</p>
       </div>
       <q-btn unelevated no-caps color="primary" icon="add" :label="$t(config.add)" @click="edit(null)" />
     </div>
-    <div class="stats" style="grid-template-columns: repeat(3, 1fr)">
-      <div v-for="s in stats" :key="s.label" class="stat-card">
-        <div class="text-grey-7">{{ $t(s.label) }}</div>
-        <div class="number">{{ s.value }}</div>
-      </div>
+    <div class="stats directory-stats">
+      <template v-for="s in stats" :key="s.label">
+        <SummaryCard v-if="kind === 'customers'" :label="$t(s.label)" :count="s.value" :icon="s.icon" :icon-class="s.color" :active="accountFilter === s.filter" @select="selectCustomerFilter(s.filter)" />
+        <div v-else class="stat-card">
+          <div class="text-grey-7">{{ $t(s.label) }}</div>
+          <div class="number">{{ s.value }}</div>
+        </div>
+      </template>
     </div>
     <ErrorBanner :message="error" retry @retry="load" />
-    <q-banner v-if="kind === 'customers' && rows.some(row => !row.user_id)" class="bg-orange-1 q-mb-md" rounded>
+    <q-banner v-if="kind === 'customers' && rows.some(row => !row.user_id)" class="bg-orange-1 q-mb-md" rounded :inline-actions="$q.screen.gt.xs">
       {{ $t('customers.prepareHint') }}
       <template #action>
         <q-btn flat no-caps color="primary" :label="$t('customers.prepareAccounts')" :loading="saving" @click="previewAccounts" />
@@ -62,6 +65,20 @@
       </template>
       <template #body-cell-name="p">
         <q-td :props="p">
+          <div :class="{ 'customer-identity': kind === 'customers' }">
+            <q-icon
+              v-if="kind === 'customers'"
+              :name="p.row.user_id ? 'account_circle' : 'person_outline'"
+              :color="p.row.user_id ? 'primary' : 'grey-6'"
+              size="36px"
+              class="customer-account-icon"
+              :class="p.row.user_id ? 'bg-light-blue-1' : 'bg-grey-2'"
+              role="img"
+              aria-hidden="false"
+              :aria-label="$t(p.row.user_id ? 'customers.registered' : 'customers.noAccount')">
+              <q-tooltip>{{ $t(p.row.user_id ? 'customers.registered' : 'customers.noAccount') }}</q-tooltip>
+            </q-icon>
+            <div>
           <div class="table-title">{{ p.row.name }}</div>
           <div class="table-sub">{{ kind === 'customers' ? p.row.mail : p.row.contact_name }}</div>
           <q-badge
@@ -73,16 +90,8 @@
           <div v-if="kind === 'customers'" class="table-sub">
             {{ p.row.phone }}
           </div>
-        </q-td>
-      </template>
-      <template #body-cell-account="p">
-        <q-td :props="p">
-          <q-badge
-            rounded
-            :color="p.row.user_id ? 'teal-1' : 'grey-2'"
-            :text-color="p.row.user_id ? 'primary' : 'grey-7'">
-            {{ $t(p.row.user_id ? 'customers.registered' : 'customers.noAccount') }}
-          </q-badge>
+            </div>
+          </div>
         </q-td>
       </template>
       <template #body-cell-code="p">
@@ -96,20 +105,31 @@
       </template>
       <template #body-cell-action="p">
         <q-td :props="p">
-          <q-btn flat no-caps color="primary" icon="edit" :label="$t('common.edit')" @click="edit(p.row)" />
+          <q-btn flat round dense color="primary" icon="edit" :aria-label="$t('common.edit')" @click="edit(p.row)">
+            <q-tooltip>{{ $t('common.edit') }}</q-tooltip>
+          </q-btn>
           <template v-if="kind === 'customers' && p.row.user_id && p.row.role !== 'admin'">
-            <q-btn flat no-caps color="primary" icon="mail_outline" :label="$t('auth.sendAccess')" :loading="accessBusy === p.row.id" :disable="accessBusy !== null" @click="sendAccess(p.row)" />
-            <q-btn flat no-caps color="negative" icon="link_off" :label="$t('auth.revokeAccess')" @click="revokeAccess(p.row)" />
+            <q-btn flat round dense color="primary" icon="mail_outline" :aria-label="$t('auth.sendAccess')" :loading="accessBusy === p.row.id" :disable="accessBusy !== null" @click="sendAccess(p.row)">
+              <q-tooltip>{{ $t('auth.sendAccess') }}</q-tooltip>
+            </q-btn>
+            <q-btn flat round dense color="grey-6" icon="link_off" :aria-label="$t('auth.revokeAccess')" @click="revokeAccess(p.row)">
+              <q-tooltip>{{ $t('auth.revokeAccess') }}</q-tooltip>
+            </q-btn>
           </template>
-          <q-btn v-if="kind === 'customers' && !p.row.user_id" flat no-caps color="primary" icon="link" :label="$t('customers.linkAccount')" @click="openLink(p.row)" />
+          <q-btn v-if="kind === 'customers' && !p.row.user_id" flat round dense color="primary" icon="link" :aria-label="$t('customers.linkAccount')" @click="openLink(p.row)">
+            <q-tooltip>{{ $t('customers.linkAccount') }}</q-tooltip>
+          </q-btn>
           <q-btn
-            v-if="kind === 'customers' && Number(p.row.id) > 0"
             flat
-            no-caps
+            round
+            dense
             color="negative"
             icon="delete_outline"
-            :label="$t('common.delete')"
-            @click="removeCustomer(p.row)" />
+            :aria-label="$t('common.delete')"
+            :disable="deleting"
+            @click="removeRow(p.row)">
+            <q-tooltip>{{ $t('common.delete') }}</q-tooltip>
+          </q-btn>
         </q-td>
       </template>
       <template #no-data>
@@ -120,6 +140,7 @@
         </div>
       </template>
     </q-table>
+    <CustomerDeleteDialog v-if="customerToDelete" :customer="customerToDelete" @close="customerToDelete = null" @deleted="customerDeleted" />
     <q-dialog :model-value="!!migration" @update:model-value="value => { if (!value) migration = null }">
       <q-card class="editor">
         <q-card-section>
@@ -301,11 +322,16 @@
   import { useQuasar } from 'quasar'
   import { useRoute } from 'vue-router'
   import { api, date, money } from '../services/api'
+  import { confirmDeletion } from '../services/deletion'
   import { t, translateText } from '../i18n'
   import PostalAddressFields from '../components/PostalAddressFields.vue'
   import CustomerSelect from '../components/CustomerSelect.vue'
   import ErrorBanner from '../components/ErrorBanner.vue'
+  import CustomerDeleteDialog from '../components/CustomerDeleteDialog.vue'
+  import SummaryCard from '../components/SummaryCard.vue'
   const q = useQuasar()
+  const deleting = ref(false)
+  const customerToDelete = ref(null)
   const accessBusy = ref(null)
   const migration = ref(null)
   const migrationError = ref('')
@@ -372,9 +398,9 @@
   const stats = computed(() =>
     kind === 'customers'
       ? [
-          { label: 'customers.all', value: rows.value.length },
-          { label: 'customers.registeredPlural', value: rows.value.filter(r => r.user_id).length },
-          { label: 'customers.noAccount', value: rows.value.filter(r => !r.user_id).length }
+          { label: 'customers.all', value: rows.value.length, filter: 'all', icon: 'groups', color: 'bg-light-blue-1 text-primary' },
+          { label: 'customers.registeredPlural', value: rows.value.filter(r => r.user_id).length, filter: 'registered', icon: 'account_circle', color: 'bg-light-blue-1 text-primary' },
+          { label: 'customers.noAccount', value: rows.value.filter(r => !r.user_id).length, filter: 'guest', icon: 'person_outline', color: 'bg-orange-1 text-orange-9' }
         ]
       : kind === 'agencies'
         ? [
@@ -392,7 +418,6 @@
     (kind === 'customers'
       ? [
           { name: 'name', field: 'name', label: t('customers.customer') },
-          { name: 'account', field: 'user_id', label: t('auth.account') },
           { name: 'equipment', field: 'equipment_count', label: t('equipment.title') },
           { name: 'orders', field: 'order_count', label: t('services.title') },
           { name: 'last', field: r => date(r.last_service), label: t('customers.lastService') }
@@ -416,21 +441,27 @@
       .map(c => ({ ...c, align: 'left' }))
       .concat({ name: 'action', field: 'id', label: '' })
   )
-  function removeCustomer(row) {
-    q.dialog({
-      title: t('customers.deleteTitle'),
-      message: t('customers.deleteConfirm', { name: row.name }),
-      cancel: { label: t('common.cancel'), flat: true },
-      ok: { label: t('common.delete'), color: 'negative' }
-    }).onOk(async () => {
-      error.value = ''
-      try {
-        await api('deletecustomer', { id: row.id })
-        await load()
-      } catch (e) {
-        error.value = e.message
-      }
+  function selectCustomerFilter(value) {
+    accountFilter.value = value
+    search.value = ''
+  }
+  function removeRow(row) {
+    if (kind === 'customers') { customerToDelete.value = row; return }
+    const group = kind === 'customers' ? 'customers' : kind === 'agencies' ? 'agencies' : 'payouts'
+    const action = { customers: 'deletecustomer', agencies: 'deleteagency', payments: 'deletepayment' }[kind]
+    confirmDeletion(q, {
+      title: t(group + '.deleteTitle'),
+      message: t(group + '.deleteConfirm', { name: row.name || row.agency_name, amount: money(row.amount), date: date(row.paid_at) }),
+      action: () => api(action, { id: row.id }),
+      onDeleted: load,
+      onError: message => { error.value = message },
+      busy: deleting
     })
+  }
+  async function customerDeleted() {
+    customerToDelete.value = null
+    await load()
+    q.notify({ type: 'positive', message: t('common.deleted') })
   }
   async function sendAccess(row) {
     accessBusy.value = row.id
@@ -553,3 +584,9 @@
   }
   onMounted(load)
 </script>
+<style scoped>
+  .directory-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (max-width: 599px) { .directory-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .customer-identity { display: flex; align-items: center; gap: 12px; }
+  .customer-account-icon { flex-shrink: 0; padding: 10px; border-radius: 50%; }
+</style>

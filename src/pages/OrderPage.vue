@@ -336,7 +336,7 @@
             v-if="session.user?.admin || (!isNew && (orderEquipment.length || unassignedReports.length))"
             flat
             bordered
-            class="section-card">
+            class="section-card equipment-reports-card">
             <h2 class="q-mb-lg">{{ $t('documents.equipmentReports') }} ({{ orderEquipment.length }})</h2>
             <div v-if="session.user?.admin" class="q-mb-lg">
               <q-select
@@ -411,14 +411,15 @@
                   :label="$t('documents.reference')" />
                 <div v-else-if="!reportReferences(item.id).length">—</div>
               </div>
-              <div>
-                <div class="text-caption text-grey-7 q-mb-sm">{{ $t('documents.files') }}</div>
+              <div class="equipment-report-files">
+                <div class="text-caption text-grey-7">{{ $t('documents.files') }}</div>
                 <DocumentFiles
                   :files="reportsFor(item.id)"
                   :editable="session.user?.admin"
                   @download="download"
+                  @edit="editDocument"
                   @remove="removeDocument" />
-                <div v-if="!reportsFor(item.id).length" class="text-caption text-grey-7 q-mb-sm">
+                <div v-if="!reportsFor(item.id).length" class="text-caption text-grey-7">
                   {{ $t('documents.noReport') }}
                 </div>
                 <template v-if="session.user?.admin">
@@ -431,7 +432,6 @@
                     :max-file-size="10485760"
                     :label="$t('documents.choosePdf')"
                     :disable="isNew || !savedEquipmentIds.includes(Number(item.id)) || uploading"
-                    class="q-mt-sm"
                     @rejected="documentError = t('errors.pdfSize')" />
                   <q-btn
                     flat
@@ -445,7 +445,8 @@
                       !reportFiles[item.id]?.length ||
                       uploading
                     "
-                    class="q-mt-sm"
+                    class="report-upload"
+                    align="left"
                     @click="uploadReports(item.id)" />
                   <div v-if="isNew || !savedEquipmentIds.includes(Number(item.id))" class="text-caption text-grey-7">
                     {{ $t('equipment.saveForReport') }}
@@ -470,6 +471,7 @@
                   :files="[doc]"
                   :editable="session.user?.admin"
                   @download="download"
+                  @edit="editDocument"
                   @remove="removeDocument" />
                 <div v-if="session.user?.admin" class="row items-center q-col-gutter-sm q-mt-xs">
                   <q-select
@@ -499,6 +501,7 @@
               :files="invoices"
               :editable="session.user?.admin"
               @download="download"
+                  @edit="editDocument"
               @remove="removeDocument" />
             <div v-if="!invoices.length" class="text-grey-7 q-mt-md">{{ $t('documents.empty') }}</div>
             <q-btn
@@ -564,24 +567,29 @@
               {{ $t('comments.empty') }}
             </div>
             <div v-for="c in comments" :key="c.id" class="bg-grey-1 rounded-borders q-pa-md q-mb-md">
-              <div class="text-caption text-grey-7 q-mb-sm">{{ c.author_name }} · {{ date(c.created_at) }}</div>
+              <div class="row items-center q-mb-sm">
+                <div class="col text-caption text-grey-7">{{ c.author_name }} · {{ date(c.created_at) }}</div>
+                <q-btn flat round dense icon="edit" :aria-label="$t('comments.edit')" @click="editComment(c)" />
+                <q-btn flat round dense color="negative" icon="delete_outline" :aria-label="$t('comments.delete')" @click="removeComment(c)" />
+              </div>
               <div style="white-space: pre-wrap">{{ c.body }}</div>
             </div>
-            <q-input outlined v-model="comment" :label="$t('comments.placeholder')" type="textarea" rows="2" />
+            <q-input outlined v-model="comment" :label="$t(commentId ? 'comments.edit' : 'comments.placeholder')" type="textarea" rows="2" />
             <ErrorBanner :message="commentError" class="q-mt-md" />
             <q-btn
               unelevated
               no-caps
               color="primary"
-              :label="$t('comments.post')"
+              :label="$t(commentId ? 'common.saveChanges' : 'comments.post')"
               :disable="!comment.trim()"
               :loading="commenting"
               @click="addComment"
               class="q-mt-md" />
+            <q-btn v-if="commentId" flat no-caps :label="$t('common.cancel')" class="q-mt-md q-ml-sm" @click="commentId = null; comment = ''" />
           </q-card>
         </div>
         <q-card flat bordered class="section-card summary-card">
-          <div class="eyebrow">{{ $t('orders.summary') }}</div>
+
           <h2 class="q-mb-lg">{{ $t('finance.estimate') }}</h2>
           <div v-for="item in selectedItems" :key="item.code" class="row no-wrap justify-between q-mb-md">
             <span class="text-grey-7 q-pr-sm">{{ translateText(item.label) }} × {{ item.quantity }}</span>
@@ -635,6 +643,29 @@
         </q-card>
       </div>
     </q-form>
+    <div v-if="session.user?.admin && !isNew && !loading && !loadError" class="q-mt-lg">
+      <ErrorBanner :message="deleteError" />
+      <q-btn flat dense no-caps color="grey-7" icon="delete_outline" :label="$t('orders.delete')" :loading="deleting" @click="removeOrder" />
+    </div>
+    <q-dialog :model-value="!!documentToEdit" @update:model-value="value => { if (!value) documentToEdit = null }">
+      <q-card class="editor">
+        <q-form @submit="saveDocumentMetadata">
+          <q-card-section class="q-gutter-md">
+            <h2>{{ $t('documents.edit') }}</h2>
+            <q-input outlined v-model="documentMetadata.filename" :label="$t('documents.filename')" :rules="[required]" />
+            <template v-if="documentToEdit?.kind === 'report'">
+              <q-input outlined v-model="documentMetadata.report_number" :label="$t('documents.reference')" />
+              <q-select outlined v-model="documentMetadata.equipment_id" :options="savedEquipmentOptions" emit-value map-options :label="$t('equipment.title')" />
+            </template>
+            <ErrorBanner :message="metadataError" />
+          </q-card-section>
+          <q-card-actions align="right">
+            <q-btn flat no-caps :label="$t('common.cancel')" v-close-popup :disable="savingMetadata" />
+            <q-btn unelevated no-caps color="primary" type="submit" :label="$t('common.saveChanges')" :loading="savingMetadata" />
+          </q-card-actions>
+        </q-form>
+      </q-card>
+    </q-dialog>
     <q-dialog v-model="documentEditor">
       <q-card class="editor">
         <q-card-section class="row items-center">
@@ -696,6 +727,7 @@
   import { t, i18n, translateText } from '../i18n'
   import PostalAddressFields from '../components/PostalAddressFields.vue'
   import { postalRate } from '../services/shipping'
+  import { confirmDeletion } from '../services/deletion'
   import CustomerSelect from '../components/CustomerSelect.vue'
   import ErrorBanner from '../components/ErrorBanner.vue'
   import EquipmentEditor from '../components/EquipmentEditor.vue'
@@ -763,6 +795,13 @@
     commentError = ref(''),
     acceptedPrices = ref({})
   const newCustomer = ref(false)
+  const deleting = ref(false)
+  const deleteError = ref('')
+  const commentId = ref(null)
+  const documentToEdit = ref(null)
+  const documentMetadata = reactive({ filename: '', report_number: '', equipment_id: null })
+  const metadataError = ref('')
+  const savingMetadata = ref(false)
   const customerId = ref(null)
   const newContact = reactive({ name: '', mail: '', phone: '' })
   const contact = reactive({ first: '', last: '', mail: '', phone: '' })
@@ -1159,23 +1198,63 @@
     commenting.value = true
     commentError.value = ''
     try {
-      await api('comment', { order_id: form.id, body: comment.value })
+      await api('comment', { id: commentId.value, order_id: form.id, body: comment.value })
       comments.value = (await api('order/' + form.id)).comments
       comment.value = ''
+      commentId.value = null
     } catch (e) {
       commentError.value = e.message
     } finally {
       commenting.value = false
     }
   }
-  async function removeDocument(doc) {
-    documentError.value = ''
+  function removeDocument(doc) {
+    confirmDeletion(q, {
+      title: t('documents.remove'), message: t('documents.removeConfirm'),
+      action: () => api('deletedocument', { id: doc.id }),
+      onDeleted: () => { documents.value = documents.value.filter(item => item.id !== doc.id) },
+      onError: message => { documentError.value = message }
+    })
+  }
+  function editDocument(doc) {
+    documentToEdit.value = doc
+    Object.assign(documentMetadata, { filename: doc.filename, report_number: doc.report_number || '', equipment_id: doc.equipment_id || null })
+    metadataError.value = ''
+  }
+  async function saveDocumentMetadata() {
+    savingMetadata.value = true
+    metadataError.value = ''
     try {
-      await api('deletedocument', { id: doc.id })
-      documents.value = documents.value.filter(item => item.id !== doc.id)
-    } catch (error) {
-      documentError.value = error.message
-    }
+      await api('savedocumentmetadata', { id: documentToEdit.value.id, ...documentMetadata })
+      documents.value = (await api('order/' + form.id)).documents
+      documentToEdit.value = null
+    } catch (e) { metadataError.value = e.message }
+    finally { savingMetadata.value = false }
+  }
+  function editComment(c) {
+    commentId.value = c.id
+    comment.value = c.body
+    commentError.value = ''
+  }
+  function removeComment(c) {
+    confirmDeletion(q, {
+      title: t('comments.delete'), message: t('comments.deleteConfirm'),
+      action: () => api('deletecomment', { id: c.id }),
+      onDeleted: () => {
+        comments.value = comments.value.filter(item => item.id !== c.id)
+        if (commentId.value === c.id) { commentId.value = null; comment.value = '' }
+      },
+      onError: message => { commentError.value = message }
+    })
+  }
+  function removeOrder() {
+    confirmDeletion(q, {
+      title: t('orders.delete'), message: t('orders.deleteConfirm', { number: orderNumber(form.id) }),
+      action: () => api('deleteorder', { id: form.id }),
+      onDeleted: () => router.replace('/servisi'),
+      onError: message => { deleteError.value = message },
+      busy: deleting
+    })
   }
 
   function resetEmail() {

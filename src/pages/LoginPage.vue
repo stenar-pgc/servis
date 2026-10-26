@@ -5,23 +5,20 @@
         <div class="login-wrap">
           <div class="row justify-end q-mb-lg"><LanguageSwitcher /></div>
           <div class="brand justify-center q-mb-xl">
-            <img src="/favicon.svg" alt="" width="48" height="48" />
-            <div>
-              stenar
-              <span>{{ $t('common.tagline') }}</span>
-            </div>
+            <BrandLogo />
           </div>
           <q-card flat bordered class="q-pa-lg">
             <q-card-section>
-              <div class="eyebrow">{{ $t('auth.welcome') }}</div>
+
               <h1 class="q-mb-sm">{{ $t('auth.title') }}</h1>
               <p class="text-grey-7">
                 {{ $t('auth.subtitle') }}
               </p>
             </q-card-section>
-            <q-form @submit="submit" class="q-px-md q-pb-md q-gutter-md">
+            <q-form @submit="submit" class="login-form q-px-md q-pb-md">
               <q-input
                 outlined
+                hide-bottom-space
                 v-model="mail"
                 :label="$t('contact.email')"
                 type="email"
@@ -29,19 +26,13 @@
                 :rules="[v => !!v || $t('validation.emailRequired')]" />
               <q-input
                 outlined
+                hide-bottom-space
                 v-model="pass"
                 :label="$t('auth.password')"
                 type="password"
                 autocomplete="current-password"
                 :rules="[v => !!v || $t('validation.passwordRequired')]" />
               <ErrorBanner :message="error" />
-              <q-btn
-                outline
-                no-caps
-                color="primary"
-                to="/povezava-za-prijavo"
-                :label="$t('auth.emailAccess')"
-                class="full-width" />
               <q-btn
                 unelevated
                 no-caps
@@ -51,6 +42,13 @@
                 icon-right="arrow_forward"
                 class="full-width"
                 :loading="loading" />
+              <q-btn
+                outline
+                no-caps
+                color="primary"
+                to="/povezava-za-prijavo"
+                :label="$t('auth.emailAccess')"
+                class="full-width" />
               <q-btn
                 outline
                 no-caps
@@ -80,6 +78,7 @@
   import { useRoute, useRouter } from 'vue-router'
   import { login, session } from '../services/api'
   import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+  import BrandLogo from '../components/BrandLogo.vue'
   import ErrorBanner from '../components/ErrorBanner.vue'
   const route = useRoute()
   const mail = ref(''),
@@ -101,3 +100,6 @@
     }
   }
 </script>
+<style scoped>
+  .login-form { display: flex; flex-direction: column; gap: 16px; }
+</style>

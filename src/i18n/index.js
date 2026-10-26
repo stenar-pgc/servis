@@ -21,7 +21,15 @@ export const t = (key, ...args) => i18n.global.t(key, ...args)
 const sourceMessages = Object.entries(sl).flatMap(([section, messages]) =>
   Object.entries(messages).map(([key, value]) => [`${section}.${key}`, value])
 )
+const legacyMessages = {
+  'E-pošta že ima račun. Prijavite se ali ponastavite geslo.': 'errors.accountExists',
+  'E-pošta že ima račun. Povežite zapisa.': 'errors.existingAccountLink',
+  'Najprej pripravite ali povežite račun stranke.': 'errors.prepareFirst',
+  'Izberite stranko brez računa in obstoječ račun.': 'errors.chooseLinkRecords',
+  'Svojega prijavljenega računa ni mogoče izbrisati.': 'errors.deleteSelf',
+}
 export function translateText(text) {
+  if (legacyMessages[text]) return t(legacyMessages[text])
   const message = sourceMessages.find(([, value]) => value === text)
   return message ? t(message[0]) : text
 }

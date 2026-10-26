@@ -2,7 +2,7 @@
   <q-page class="login-page flex flex-center">
     <q-card flat bordered class="login-wrap q-pa-lg">
       <q-card-section>
-        <div class="eyebrow">STENAR SERVIS</div>
+
         <h1>{{ $t('auth.emailAccess') }}</h1>
         <p class="text-grey-7 q-mt-sm">{{ $t('auth.accessHint') }}</p>
       </q-card-section>

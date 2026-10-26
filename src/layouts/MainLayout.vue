@@ -27,13 +27,9 @@
     </q-header>
     <q-drawer v-model="drawer" show-if-above :width="244" bordered class="app-drawer">
       <router-link to="/servisi" class="brand">
-        <img src="/favicon.svg" alt="" width="40" height="40" />
-        <div>
-          stenar
-          <span>{{ $t('common.tagline') }}</span>
-        </div>
+        <BrandLogo />
       </router-link>
-      <div class="nav-label">{{ $t('navigation.workspace') }}</div>
+
       <q-list padding class="q-px-md">
         <q-item
           v-for="item in navigation"
@@ -66,6 +62,7 @@
   import { useRoute, useRouter } from 'vue-router'
   import { useQuasar } from 'quasar'
   import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+  import BrandLogo from '../components/BrandLogo.vue'
   import { api, session } from '../services/api'
   const drawer = ref(false),
     loggingOut = ref(false),

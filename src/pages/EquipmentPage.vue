@@ -2,7 +2,7 @@
   <q-page class="page">
     <div class="page-heading">
       <div>
-        <div class="eyebrow">{{ $t('equipment.eyebrow') }}</div>
+
         <h1>{{ $t(session.user.admin ? 'equipment.register' : 'equipment.mine') }}</h1>
         <p>{{ $t('equipment.subtitle') }}</p>
       </div>
@@ -51,7 +51,9 @@
       </template>
       <template #body-cell-action="p">
         <q-td :props="p">
-          <q-btn flat round dense icon="edit" :aria-label="$t('equipment.edit')" @click="edit(p.row)" />
+          <q-btn flat round dense icon="edit" :aria-label="$t('equipment.edit')" @click="edit(p.row)">
+            <q-tooltip>{{ $t('equipment.edit') }}</q-tooltip>
+          </q-btn>
           <q-btn
             flat
             round
@@ -59,7 +61,12 @@
             color="primary"
             icon="add_circle_outline"
             :to="{ path: '/servisi/novo', query: { equipment: p.row.id } }"
-            :aria-label="$t('orders.new')" />
+            :aria-label="$t('orders.new')">
+            <q-tooltip>{{ $t('orders.new') }}</q-tooltip>
+          </q-btn>
+          <q-btn v-if="session.user.admin" flat round dense color="negative" icon="delete_outline" :aria-label="$t('equipment.delete')" :disable="deleting" @click="removeEquipment(p.row)">
+            <q-tooltip>{{ $t('equipment.delete') }}</q-tooltip>
+          </q-btn>
         </q-td>
       </template>
       <template #no-data>
@@ -75,10 +82,24 @@
 </template>
 <script setup>
   import { computed, onMounted, ref } from 'vue'
+  import { useQuasar } from 'quasar'
+  import { confirmDeletion } from '../services/deletion'
   import { api, date, inspectionState, session } from '../services/api'
   import { t, translateText } from '../i18n'
   import EquipmentEditor from '../components/EquipmentEditor.vue'
   import ErrorBanner from '../components/ErrorBanner.vue'
+  const q = useQuasar()
+  const deleting = ref(false)
+  function removeEquipment(row) {
+    confirmDeletion(q, {
+      title: t('equipment.delete'),
+      message: t('equipment.deleteConfirm', { name: [row.manufacturer, row.model, row.serial].filter(Boolean).join(' · ') || t('equipment.title') }),
+      action: () => api('deleteequipment', { id: row.id }),
+      onDeleted: load,
+      onError: message => { error.value = message },
+      busy: deleting
+    })
+  }
   const rows = ref([]),
     customers = ref([]),
     search = ref(''),

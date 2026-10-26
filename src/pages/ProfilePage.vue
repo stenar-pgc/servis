@@ -2,7 +2,7 @@
   <q-page class="page">
     <div class="page-heading">
       <div>
-        <div class="eyebrow">{{ $t('profile.eyebrow') }}</div>
+
         <h1>{{ $t('profile.title') }}</h1>
         <p>{{ $t('profile.subtitle') }}</p>
       </div>

@@ -3,8 +3,7 @@
     <q-header bordered class="app-header text-dark">
       <q-toolbar class="q-px-lg">
         <router-link to="/narocilo" class="brand q-pa-none">
-          <img src="/favicon.svg" alt="" width="36" height="36" />
-          <div>stenar</div>
+          <BrandLogo compact />
         </router-link>
         <q-space />
         <LanguageSwitcher />
@@ -18,4 +17,5 @@
 </template>
 <script setup>
   import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+  import BrandLogo from '../components/BrandLogo.vue'
 </script>

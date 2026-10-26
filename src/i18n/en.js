@@ -23,6 +23,11 @@ export default {
     arranged: 'By arrangement'
   },
   customers: {
+    deleteAccountHint: 'The Niceclouds login and contact details will be deleted. Unless you select the option below, service history and equipment are kept under a contact record without a login.',
+    deleteContactHint: 'This contact has no login account. Select the option below to delete its related service records as well.',
+    deleteReview: 'Confirm removal for {name} and choose whether to remove the related service records.',
+    deleteRelated: 'Also delete all related Servis data',
+    deleteRelatedHint: "Removes orders, equipment, invoices, reports and other PDFs, comments, and owned agencies with their payouts. Other customers' records remain protected.",
     prepareHint: 'Some customers still have no linked account. Prepare accounts or explicitly link existing records.',
     prepareAccounts: 'Prepare accounts',
     prepareReview: 'Ready to create accounts for {count} customers. Equipment and history are preserved. No emails will be sent.',
@@ -56,6 +61,8 @@ export default {
     lastService: 'Last service'
   },
   equipment: {
+    delete: 'Delete equipment',
+    deleteConfirm: 'Delete equipment {name}? Equipment with service history or reports cannot be deleted.',
     optional: 'Equipment details are optional.',
     optionalWithService: 'Registered equipment is optional when you select at least one service.',
     unassigned: 'No registered equipment',
@@ -138,6 +145,7 @@ export default {
     englishReport: 'Report in English'
   },
   common: {
+    deleted: 'Record deleted.',
     delete: 'Delete',
     period: 'Period',
     copy: 'Copy',
@@ -165,6 +173,12 @@ export default {
     dash: '—'
   },
   errors: {
+    customerDeleteRelated: 'This customer has linked records. Select deletion of related data as well.',
+    deleteSelf: 'You cannot delete your currently signed-in account.',
+    equipmentOtherCustomer: "Equipment is linked to another customer's order. Resolve that link first.",
+    agencyOtherCustomer: "The agency is linked to another customer's order. Resolve that link first.",
+    equipmentHasHistory: 'Equipment with service history or reports cannot be deleted.',
+    agencyHasHistory: 'Agencies with orders or payouts cannot be deleted. Mark the agency inactive instead.',
     invalidAccess: 'This access link is invalid. Request a new link.',
     prepareFirst: 'Prepare or link the customer account first.',
     contactInvalid: 'Invalid contact details.',
@@ -212,6 +226,8 @@ export default {
     invoiceExists: 'This order already has an invoice. Remove it before uploading another invoice.'
   },
   orders: {
+    delete: 'Delete service order',
+    deleteConfirm: 'Delete service order {number}? Its PDFs, comments and service items will also be deleted. The customer and equipment are kept.',
     confirmationPending: 'Awaiting customer confirmation',
     createInvoice: 'Create service invoice',
     title: 'Orders',
@@ -246,6 +262,8 @@ export default {
     saved: 'Order saved.'
   },
   agencies: {
+    deleteTitle: 'Delete agency',
+    deleteConfirm: 'Delete agency {name}? Agencies with orders or payouts cannot be deleted; you can mark them inactive.',
     totalCommissions: 'Total commissions',
     codeCopied: 'Code copied.',
     title: 'Agencies',
@@ -362,6 +380,11 @@ export default {
     sent: 'Documents sent.'
   },
   documents: {
+    edit: 'Edit document details',
+    filename: 'PDF filename',
+    preview: 'Preview document',
+    loading: 'Loading PDF',
+    previewFailed: 'Unable to open the PDF. Please try again.',
     files: 'Files',
     removeConfirm: 'Remove this document?',
     remove: 'Remove document',
@@ -409,6 +432,8 @@ export default {
     role: 'Role'
   },
   payouts: {
+    deleteTitle: 'Delete payout',
+    deleteConfirm: 'Delete the {amount} payout to {name} dated {date}?',
     title: 'Agency payments',
     recipient: 'Recipient',
     description: 'Payment description',
@@ -449,6 +474,9 @@ export default {
     paypal: 'PayPal'
   },
   comments: {
+    edit: 'Edit comment',
+    delete: 'Delete comment',
+    deleteConfirm: 'Delete this internal comment?',
     title: 'Internal comments',
     empty: 'No comments yet.',
     placeholder: 'Write a comment for your colleagues …',
