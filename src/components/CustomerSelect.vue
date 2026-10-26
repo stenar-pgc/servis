@@ -1,17 +1,15 @@
 <template>
   <q-select
-    :model-value="modelValue"
+    :model-value="selectedCustomer"
     :options="options"
     option-label="name"
     option-value="id"
-    emit-value
-    map-options
     use-input
     hide-selected
     fill-input
     input-debounce="0"
     @filter="filter"
-    @update:model-value="$emit('update:modelValue', $event)">
+    @update:model-value="value => $emit('update:modelValue', value ? Number(value.id) : null)">
     <template #option="scope">
       <q-item v-bind="scope.itemProps">
         <q-item-section>
@@ -28,6 +26,11 @@
   const props = defineProps({ modelValue: [Number, String], customers: { type: Array, default: () => [] } })
   defineEmits(['update:modelValue'])
   const search = ref('')
+  const selectedCustomer = computed(() =>
+    props.modelValue == null
+      ? null
+      : props.customers.find(customer => Number(customer.id) === Number(props.modelValue)) || null
+  )
   const options = computed(() =>
     props.customers.filter(customer =>
       `${customer.name} ${customer.mail || ''}`.toLocaleLowerCase().includes(search.value.toLocaleLowerCase())
