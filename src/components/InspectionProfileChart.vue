@@ -1,20 +1,17 @@
 <template>
   <div class="profile-chart">
     <svg :viewBox="`0 0 ${width} ${height}`" role="img" :aria-label="$t('inspection.lineDeviation')" class="deviation-chart">
-      <defs><clipPath :id="clipId"><path :d="outline" /></clipPath></defs>
+      <defs><clipPath :id="clipId"><rect :x="left" :y="top" :width="plotWidth" :height="bottom-top" /></clipPath></defs>
       <rect :x="left" :y="y(10)" :width="plotWidth" :height="y(-10)-y(10)" fill="#f2f9fc" />
-      <g class="wing-profile" :transform="`translate(${left},${y(0)-43}) scale(${plotWidth/513},.88)`" aria-hidden="true">
-        <path :d="outline" fill="#deeff6" stroke="#90c5da" stroke-width="1.25" />
-        <g :clip-path="`url(#${clipId})`"><line v-for="(axis,index) in axes" :key="axis.name" :x1="(index+.5)*513/Math.max(1,axes.length)" :x2="(index+.5)*513/Math.max(1,axes.length)-15" y1="0" y2="92" stroke="#badbe8" stroke-width="1.2" /><path d="M0 62 Q227 44 513 75" stroke="#badbe8" stroke-width="1" fill="none" /></g>
-      </g>
-      <g v-for="tick in ticks" :key="tick"><line :x1="left" :x2="right" :y1="y(tick)" :y2="y(tick)" :stroke="tick===0?'#7498a8':'#d5e5ec'" :stroke-dasharray="tick===0?'':'3 4'" /><text :x="left-10" :y="y(tick)+4" text-anchor="end">{{ tick }}</text></g>
+      <image class="wing-profile" href="/inspection-wing.png" :x="left-35" :y="y(0)-profileHeight/2" :width="profileWidth" :height="profileHeight" preserveAspectRatio="xMidYMid meet" aria-hidden="true" />
+      <g v-for="tick in ticks" :key="tick"><line :x1="left" :x2="right" :y1="y(tick)" :y2="y(tick)" :stroke="tick===0?'#7498a8':'#d5e5ec'" :class="tick===0?'zero-line':''" :stroke-dasharray="tick===0?'':'3 4'" /><text :x="left-10" :y="y(tick)+4" text-anchor="end">{{ tick }}</text></g>
       <g v-for="(axis,index) in axes" :key="axis.name">
-        <rect v-if="axis.min!=null" :x="x(index)-barWidth/2" :y="y(axis.max)" :width="barWidth" :height="Math.max(1.5,y(axis.min)-y(axis.max))" fill="#039acc" fill-opacity=".7"><title>{{ axis.name }}: {{ number(axis.min) }} … {{ number(axis.max) }} mm</title></rect>
-        <rect v-if="axis.max>10" :x="x(index)-barWidth/2" :y="y(axis.max)" :width="barWidth" :height="y(Math.max(10,axis.min))-y(axis.max)" fill="#ee9b3b" />
-        <rect v-if="axis.min!=null && axis.min < -10" :x="x(index)-barWidth/2" :y="y(Math.min(-10,axis.max))" :width="barWidth" :height="y(axis.min)-y(Math.min(-10,axis.max))" fill="#ee9b3b" />
-        <text :x="x(index)" :y="height-14" text-anchor="middle" class="axis-label">{{ axis.name }}</text>
+        <g :clip-path="`url(#${clipId})`" class="profile-bars">
+          <rect v-for="(segment,part) in axis.segments" :key="part" :x="x(index)-barWidth/2" :y="y(Math.max(segment.start,segment.end))" :width="barWidth" :height="Math.abs(y(segment.start)-y(segment.end))" :fill="segment.outside?'#e69138':'#039acc'" :class="segment.outside?'bar-outside':'bar-within'" :data-start="segment.start" :data-end="segment.end"><title>{{ axis.name }}: {{ number(axis.min) }} … {{ number(axis.max) }} mm</title></rect>
+        </g>
+        <text :x="x(index)" :y="height-14" text-anchor="middle" class="axis-label">{{ axis.min==null?'':axis.name }}</text>
       </g>
-      <g v-for="side in sides" :key="side.name" :class="'profile-'+side.name">
+      <g v-for="side in sides" :key="side.name" :class="'profile-'+side.name" :clip-path="`url(#${clipId})`">
         <path :d="path(side.name)" fill="none" :stroke="side.color" stroke-width="2.6" stroke-linejoin="round" />
         <circle v-for="point in points(side.name)" :key="point.index" :cx="point.x" :cy="point.y" r="3.5" :fill="side.color"><title>{{ $t('inspection.'+side.name) }} {{ axes[point.index].name }}: {{ number(point.value) }} mm</title></circle>
         <path :d="trend(side.name)" fill="none" :stroke="side.color" stroke-opacity=".45" stroke-width="1.4" stroke-dasharray="5 4" />
@@ -29,8 +26,8 @@
 import {computed,useId} from 'vue'
 const props=defineProps({axes:{type:Array,required:true},limit:{type:Number,default:20}})
 const clipId='wing-'+useId().replaceAll(':',''),width=560,height=258,left=45,right=540,top=24,bottom=220,plotWidth=right-left
-const outline='M0 62 C29 20 90 -3 168 0 C286 1 417 35 513 75 C442 89 112 94 23 87 C9 85 1 76 0 62 Z'
-const sides=[{name:'right',color:'#006783'},{name:'left',color:'#e58d26'}]
+const profileWidth=plotWidth*1.03,profileHeight=profileWidth*90/513
+const sides=[{name:'right',color:'#004b64'},{name:'left',color:'#b45f06'}]
 const ticks=computed(()=>[-props.limit,-10,0,10,props.limit])
 const x=index=>left+(index+.5)*plotWidth/Math.max(1,props.axes.length)
 const y=value=>top+(props.limit-value)*(bottom-top)/(props.limit*2)
