@@ -20,6 +20,7 @@
         @select="selectFilter(stat.value)" />
     </div>
     <ErrorBanner :message="error" retry @retry="load" />
+    <RelatedRecordsBar :customer-id="customerId" :customer-name="customerName" :equipment-id="equipmentId" :equipment="selectedEquipment" />
     <q-card flat bordered>
       <q-tabs
         v-model="filter"
@@ -29,12 +30,12 @@
         class="filter-tabs"
         outside-arrows
         mobile-arrows>
-        <q-tab name="all" :label="$t('orders.all') + ' (' + rows.length + ')'" />
+        <q-tab name="all" :label="$t('orders.all') + ' (' + scopedRows.length + ')'" />
         <q-tab
           v-for="s in statuses"
           :key="s.value"
           :name="s.value"
-          :label="$t(s.label) + ' (' + rows.filter(r => r.status === s.value).length + ')'" />
+          :label="$t(s.label) + ' (' + scopedRows.filter(r => r.status === s.value).length + ')'" />
       </q-tabs>
       <q-table
         flat
@@ -44,7 +45,7 @@
         :filter="search"
         :loading="loading"
         :pagination="{ rowsPerPage: 10, sortBy: 'id', descending: true }"
-        @row-click="(_, row) => router.push('/servisi/' + row.id)">
+        @row-click="openOrder">
         <template #top>
           <div class="row items-center full-width q-gutter-sm">
             <q-input outlined dense v-model="search" :placeholder="$t('orders.search')" class="search-field" clearable>
@@ -57,17 +58,19 @@
         </template>
         <template #body-cell-id="p">
           <q-td :props="p">
-            <router-link class="table-title" :to="'/servisi/' + p.row.id">{{ orderNumber(p.row.id) }}</router-link>
+            <router-link class="table-title" :to="'/servisi/' + p.row.id" @click.stop>{{ orderNumber(p.row.id) }}</router-link>
             <div class="table-sub">{{ date(p.row.created_at) }}</div>
           </q-td>
         </template>
         <template #body-cell-equipment="p">
           <q-td :props="p">
-            <div v-if="p.row.equipment_count || p.row.equipment_id" class="table-title">
-              {{ p.row.equipment_label || [p.row.manufacturer, p.row.model, p.row.size].filter(Boolean).join(' ') }}
-            </div>
+            <template v-if="p.row.equipment?.length">
+              <div v-for="item in p.row.equipment" :key="item.id"><router-link class="table-title" :to="{ path: '/servisi', query: { equipment: item.id } }" @click.stop>{{ equipmentLabel(item) || $t('equipment.title') }}</router-link></div>
+            </template>
+            <router-link v-else-if="p.row.equipment_id && Number(p.row.equipment_count || 1) === 1" class="table-title" :to="{ path: '/servisi', query: { equipment: p.row.equipment_id } }" @click.stop>{{ p.row.equipment_label || equipmentLabel(p.row) || $t('equipment.title') }}</router-link>
+            <div v-else-if="p.row.equipment_count" class="table-title">{{ p.row.equipment_label }}</div>
             <div v-else class="table-title">{{ $t('equipment.unassigned') }}</div>
-            <div class="table-sub">{{ p.row.customer_name || $t('customers.unassigned') }}</div>
+            <div class="table-sub"><router-link v-if="p.row.customer_id != null" :to="{ path: '/servisi', query: { customer: p.row.customer_id } }" @click.stop>{{ p.row.customer_name }}</router-link><span v-else>{{ p.row.customer_name || $t('customers.unassigned') }}</span></div>
             <q-badge v-if="p.row.confirmation_pending" color="orange-1" text-color="orange-9">
               {{ $t('orders.confirmationPending') }}
             </q-badge>
@@ -98,7 +101,7 @@
           </q-td>
         </template>
         <template #body-cell-action="p">
-          <q-td :props="p">
+          <q-td :props="p" @click.stop>
             <q-btn flat round dense icon="arrow_forward" :to="'/servisi/' + p.row.id" :aria-label="$t('orders.open')">
               <q-tooltip>{{ $t('orders.open') }}</q-tooltip>
             </q-btn>
@@ -110,7 +113,7 @@
         <template #no-data>
           <div class="empty full-width">
             <q-icon name="build_circle" size="42px" />
-            <strong>{{ $t(search || filter !== 'all' ? 'common.noResults' : 'orders.emptyTitle') }}</strong>
+            <strong>{{ $t(search || filter !== 'all' || customerId || equipmentId ? 'common.noResults' : 'orders.emptyTitle') }}</strong>
             {{ $t('orders.emptyHint') }}
           </div>
         </template>
@@ -119,8 +122,8 @@
   </q-page>
 </template>
 <script setup>
-  import { computed, onMounted, ref } from 'vue'
-  import { useRouter } from 'vue-router'
+  import { computed, onMounted, ref, watch } from 'vue'
+  import { useRoute, useRouter } from 'vue-router'
   import { useQuasar } from 'quasar'
   import { confirmDeletion } from '../services/deletion'
   import { api, date, orderNumber, session, statuses } from '../services/api'
@@ -128,6 +131,8 @@
   import ErrorBanner from '../components/ErrorBanner.vue'
   import StatusBadge from '../components/StatusBadge.vue'
   import SummaryCard from '../components/SummaryCard.vue'
+  import RelatedRecordsBar from '../components/RelatedRecordsBar.vue'
+  import { sameId, equipmentIds, equipmentLabel, isRowNavigation } from '../services/records'
   const q = useQuasar()
   const deleting = ref(false)
   function removeOrder(id) {
@@ -145,32 +150,48 @@
     filter = ref('all'),
     loading = ref(false),
     error = ref(''),
-    router = useRouter()
-  const filtered = computed(() => rows.value.filter(r => filter.value === 'all' || r.status === filter.value))
+    router = useRouter(),
+    route = useRoute(),
+    scopeCustomers = ref([]),
+    scopeEquipment = ref([])
+  const customerId = computed(() => String(route.query.customer || ''))
+  const equipmentId = computed(() => String(route.query.equipment || ''))
+  const customerName = computed(() => scopeCustomers.value.find(row => sameId(row.id, customerId.value))?.name || rows.value.find(row => sameId(row.customer_id, customerId.value))?.customer_name || '')
+  const selectedEquipment = computed(() => scopeEquipment.value.find(row => sameId(row.id, equipmentId.value)) || null)
+  const scopedRows = computed(() => rows.value.filter(row => (!customerId.value || sameId(row.customer_id, customerId.value)) && (!equipmentId.value || equipmentIds(row).some(id => sameId(id, equipmentId.value)))))
+  const filtered = computed(() => scopedRows.value.filter(r => filter.value === 'all' || r.status === filter.value))
   const stats = computed(() => [
-    { value: 'all', label: 'orders.all', icon: 'inventory_2', color: 'bg-light-blue-1 text-primary', count: rows.value.length },
+    { value: 'all', label: 'orders.all', icon: 'inventory_2', color: 'bg-light-blue-1 text-primary', count: scopedRows.value.length },
     {
       value: 'submitted',
       label: 'statuses.awaitingArrival',
       icon: 'schedule',
       color: 'bg-orange-1 text-orange-9',
-      count: rows.value.filter(r => r.status === 'submitted').length
+      count: scopedRows.value.filter(r => r.status === 'submitted').length
     },
     {
       value: 'in_service',
       label: 'statuses.inService',
       icon: 'build',
       color: 'bg-blue-1 text-blue-8',
-      count: rows.value.filter(r => r.status === 'in_service').length
+      count: scopedRows.value.filter(r => r.status === 'in_service').length
     },
     {
       value: 'completed',
       label: 'statuses.completedServices',
       icon: 'task_alt',
       color: 'bg-light-blue-1 text-primary',
-      count: rows.value.filter(r => r.status === 'completed').length
+      count: scopedRows.value.filter(r => r.status === 'completed').length
     }
   ])
+  function openOrder(event, row) {
+    if (isRowNavigation(event)) router.push('/servisi/' + row.id)
+  }
+  watch(() => [route.query.customer, route.query.equipment], () => {
+    filter.value = 'all'
+    search.value = ''
+    load()
+  })
   function selectFilter(value) {
     filter.value = value
     search.value = ''
@@ -191,15 +212,21 @@
       : []),
     { name: 'action', label: '', field: 'id' }
   ])
+  let loadVersion = 0
   async function load() {
+    const version = ++loadVersion
     loading.value = true
     error.value = ''
     try {
-      rows.value = await api('orders')
+      const result = await Promise.all([api('orders'), customerId.value && session.user.admin ? api('customers') : [], equipmentId.value ? api('equipment') : []])
+      if (version !== loadVersion) return
+      rows.value = result[0]
+      scopeCustomers.value = result[1]
+      scopeEquipment.value = result[2]
     } catch (e) {
-      error.value = e.message
+      if (version === loadVersion) error.value = e.message
     } finally {
-      loading.value = false
+      if (version === loadVersion) loading.value = false
     }
   }
   onMounted(load)

@@ -9,33 +9,35 @@
       <q-btn unelevated no-caps color="primary" icon="add" :label="$t('equipment.new')" @click="edit(null)" />
     </div>
     <ErrorBanner :message="error" retry @retry="load" />
+    <RelatedRecordsBar :customer-id="customerId" :customer-name="customerName" :equipment-id="equipmentId" :equipment="selectedEquipment" />
     <q-table
       flat
       bordered
-      :rows="rows"
+      :rows="scopedRows"
       :columns="columns"
       :filter="search"
       row-key="id"
       :loading="loading"
-      :pagination="{ rowsPerPage: 10 }">
+      :pagination="{ rowsPerPage: 10 }"
+      @row-click="openServices">
       <template #top>
         <q-input outlined dense v-model="search" :placeholder="$t('equipment.search')" class="search-field" clearable>
           <template #prepend><q-icon name="search" /></template>
         </q-input>
         <q-space />
-        <span class="text-caption text-grey-6">{{ rows.length }} {{ $t('equipment.itemCount') }}</span>
+        <span class="text-caption text-grey-6">{{ scopedRows.length }} {{ $t('equipment.itemCount') }}</span>
       </template>
       <template #body-cell-model="p">
         <q-td :props="p">
-          <q-btn
-            flat
-            no-caps
-            dense
-            color="primary"
-            :label="p.row.manufacturer + ' ' + p.row.model"
-            @click="edit(p.row)" />
+          <router-link class="table-title" :to="{ path: '/servisi', query: { equipment: p.row.id } }" @click.stop>{{ equipmentLabel(p.row) || $t('equipment.title') }}</router-link>
           <div class="table-sub">{{ translateText(p.row.type) }} · {{ p.row.size || '—' }}</div>
         </q-td>
+      </template>
+      <template #body-cell-owner="p">
+        <q-td :props="p"><router-link v-if="p.row.customer_id != null" :to="{ path: '/servisi', query: { customer: p.row.customer_id } }" @click.stop>{{ p.row.customer_name }}</router-link><span v-else>{{ $t('equipment.noOwner') }}</span></q-td>
+      </template>
+      <template #body-cell-count="p">
+        <q-td :props="p"><router-link :to="{ path: '/servisi', query: { equipment: p.row.id } }" @click.stop>{{ p.row.service_count || 0 }}</router-link></q-td>
       </template>
       <template #body-cell-valid="p">
         <q-td :props="p">
@@ -50,7 +52,7 @@
         </q-td>
       </template>
       <template #body-cell-action="p">
-        <q-td :props="p">
+        <q-td :props="p" @click.stop>
           <q-btn flat round dense icon="edit" :aria-label="$t('equipment.edit')" @click="edit(p.row)">
             <q-tooltip>{{ $t('equipment.edit') }}</q-tooltip>
           </q-btn>
@@ -72,7 +74,7 @@
       <template #no-data>
         <div class="empty full-width">
           <q-icon name="paragliding" size="42px" />
-          <strong>{{ $t('equipment.emptyTitle') }}</strong>
+          <strong>{{ $t(customerId || equipmentId ? 'common.noRecords' : 'equipment.emptyTitle') }}</strong>
           {{ $t('equipment.emptyHint') }}
         </div>
       </template>
@@ -81,14 +83,17 @@
   </q-page>
 </template>
 <script setup>
-  import { computed, onMounted, ref } from 'vue'
+  import { computed, onMounted, ref, watch } from 'vue'
+  import { useRoute, useRouter } from 'vue-router'
+  import { sameId, equipmentLabel, isRowNavigation } from '../services/records'
+  import RelatedRecordsBar from '../components/RelatedRecordsBar.vue'
   import { useQuasar } from 'quasar'
   import { confirmDeletion } from '../services/deletion'
   import { api, date, inspectionState, session } from '../services/api'
   import { t, translateText } from '../i18n'
   import EquipmentEditor from '../components/EquipmentEditor.vue'
   import ErrorBanner from '../components/ErrorBanner.vue'
-  const q = useQuasar()
+  const q = useQuasar(), route = useRoute(), router = useRouter()
   const deleting = ref(false)
   function removeEquipment(row) {
     confirmDeletion(q, {
@@ -108,6 +113,15 @@
     loading = ref(false),
     error = ref(''),
     today = new Date().toISOString().slice(0, 10)
+  const customerId = computed(() => String(route.query.customer || ''))
+  const equipmentId = computed(() => String(route.query.equipment || ''))
+  const customerName = computed(() => customers.value.find(row => sameId(row.id, customerId.value))?.name || rows.value.find(row => sameId(row.customer_id, customerId.value))?.customer_name || '')
+  const selectedEquipment = computed(() => rows.value.find(row => sameId(row.id, equipmentId.value)) || null)
+  const scopedRows = computed(() => rows.value.filter(row => (!customerId.value || sameId(row.customer_id, customerId.value)) && (!equipmentId.value || sameId(row.id, equipmentId.value))))
+  function openServices(event, row) {
+    if (isRowNavigation(event)) router.push({ path: '/servisi', query: { equipment: row.id } })
+  }
+  watch(() => [route.query.customer, route.query.equipment], () => { search.value = '' })
   const columns = computed(() => [
     {
       name: 'model',

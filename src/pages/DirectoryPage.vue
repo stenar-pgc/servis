@@ -32,7 +32,8 @@
       :loading="loading"
       :filter="kind === 'customers' ? '' : search"
       :pagination="{ rowsPerPage: 10 }"
-      row-key="id">
+      row-key="id"
+      v-on="kind === 'customers' ? { rowClick: openCustomer } : {}">
       <template #top>
         <q-input outlined dense v-model="search" :placeholder="$t(config.search)" class="search-field" clearable>
           <template #prepend><q-icon name="search" /></template>
@@ -79,7 +80,7 @@
               <q-tooltip>{{ $t(p.row.user_id ? 'customers.registered' : 'customers.noAccount') }}</q-tooltip>
             </q-icon>
             <div>
-          <div class="table-title">{{ p.row.name }}</div>
+          <router-link v-if="kind === 'customers'" class="table-title" :to="{ path: '/servisi', query: { customer: p.row.id } }" @click.stop>{{ p.row.name }}</router-link><div v-else class="table-title">{{ p.row.name }}</div>
           <div class="table-sub">{{ kind === 'customers' ? p.row.mail : p.row.contact_name }}</div>
           <q-badge
             v-if="kind === 'customers' && Number(p.row.account_requested) && !p.row.user_id"
@@ -94,6 +95,12 @@
           </div>
         </q-td>
       </template>
+      <template #body-cell-equipment="p">
+        <q-td :props="p"><router-link :to="{ path: '/oprema', query: { customer: p.row.id } }" @click.stop>{{ p.row.equipment_count || 0 }}</router-link></q-td>
+      </template>
+      <template #body-cell-orders="p">
+        <q-td :props="p"><router-link v-if="kind === 'customers'" :to="{ path: '/servisi', query: { customer: p.row.id } }" @click.stop>{{ p.row.order_count || 0 }}</router-link><span v-else>{{ p.value }}</span></q-td>
+      </template>
       <template #body-cell-code="p">
         <q-td :props="p">
           <div class="table-title">{{ p.row.code }}</div>
@@ -104,7 +111,7 @@
         </q-td>
       </template>
       <template #body-cell-action="p">
-        <q-td :props="p">
+        <q-td :props="p" @click.stop>
           <q-btn flat round dense color="primary" icon="edit" :aria-label="$t('common.edit')" @click="edit(p.row)">
             <q-tooltip>{{ $t('common.edit') }}</q-tooltip>
           </q-btn>
@@ -320,16 +327,17 @@
 <script setup>
   import { computed, onMounted, reactive, ref } from 'vue'
   import { useQuasar } from 'quasar'
-  import { useRoute } from 'vue-router'
+  import { useRoute, useRouter } from 'vue-router'
   import { api, date, money } from '../services/api'
   import { confirmDeletion } from '../services/deletion'
+  import { isRowNavigation } from '../services/records'
   import { t, translateText } from '../i18n'
   import PostalAddressFields from '../components/PostalAddressFields.vue'
   import CustomerSelect from '../components/CustomerSelect.vue'
   import ErrorBanner from '../components/ErrorBanner.vue'
   import CustomerDeleteDialog from '../components/CustomerDeleteDialog.vue'
   import SummaryCard from '../components/SummaryCard.vue'
-  const q = useQuasar()
+  const q = useQuasar(), router = useRouter()
   const deleting = ref(false)
   const customerToDelete = ref(null)
   const accessBusy = ref(null)
@@ -441,6 +449,9 @@
       .map(c => ({ ...c, align: 'left' }))
       .concat({ name: 'action', field: 'id', label: '' })
   )
+  function openCustomer(event, row) {
+    if (kind === 'customers' && isRowNavigation(event)) router.push({ path: '/servisi', query: { customer: row.id } })
+  }
   function selectCustomerFilter(value) {
     accountFilter.value = value
     search.value = ''

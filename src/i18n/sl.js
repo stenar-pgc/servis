@@ -1,4 +1,5 @@
 export default {
+  related: { clear: 'Prikaži vse' },
   certificate: {
     "edit": "Uredi pregled",
     "save": "Shrani zapis",

@@ -103,7 +103,10 @@
       :rows="tab === 'equipment' ? equipment : orders"
       :columns="tab === 'equipment' ? equipmentColumns : orderColumns"
       row-key="id"
-      :loading="loading">
+      :loading="loading"
+      @row-click="openRecord">
+      <template #body-cell-model="p"><q-td :props="p"><router-link class="table-title" :to="{ path: '/servisi', query: { equipment: p.row.id } }" @click.stop>{{ equipmentLabel(p.row) || $t('equipment.title') }}</router-link></q-td></template>
+      <template #body-cell-id="p"><q-td :props="p"><router-link class="table-title" :to="'/servisi/' + p.row.id" @click.stop>{{ orderNumber(p.row.id) }}</router-link></q-td></template>
       <template #body-cell-validity="p">
         <q-td :props="p">
           <q-badge
@@ -125,6 +128,8 @@
 </template>
 <script setup>
   import { computed, onMounted, reactive, ref } from 'vue'
+  import { useRouter } from 'vue-router'
+  import { equipmentLabel, isRowNavigation } from '../services/records'
   import { useQuasar } from 'quasar'
   import { api, date, inspectionState, money, orderNumber, session } from '../services/api'
   import { t, i18n } from '../i18n'
@@ -132,6 +137,10 @@
   import PostalAddressFields from '../components/PostalAddressFields.vue'
   import ErrorBanner from '../components/ErrorBanner.vue'
   import StatusBadge from '../components/StatusBadge.vue'
+  const router = useRouter()
+  function openRecord(event, row) {
+    if (isRowNavigation(event)) router.push(tab.value === 'equipment' ? { path: '/servisi', query: { equipment: row.id } } : '/servisi/' + row.id)
+  }
   const commissionPeriod = ref('all')
   const sendingPassword = ref(false)
   const passwordSent = ref(false)

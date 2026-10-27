@@ -1,4 +1,5 @@
 export default {
+  related: { clear: 'Show all' },
   certificate: {
     "edit": "Edit inspection",
     "save": "Save record",
