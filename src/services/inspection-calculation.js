@@ -47,7 +47,7 @@ const dateSerial = value => {
   return timestamp / 86400000 + 25569
 }
 const textValue = v => v === null ? '' : String(v)
-export function inspectionCalculator(values) {
+export function inspectionCalculator(values, additionalSheets = {}) {
   const cache = new Map(), active = new Set()
   function get(sheet, address) {
     const key = sheet + '!' + address
@@ -55,7 +55,7 @@ export function inspectionCalculator(values) {
     if (cache.has(key)) { const v = cache.get(key); if (v instanceof Error) throw v; return v }
     if (active.has(key)) fail('#CYCLE!')
     active.add(key)
-    try { const cell = sheets[sheet]?.[address]; const value = cell?.f ? evaluate(parse(cell.f), sheet) : cell?.v ?? null; cache.set(key, value); return value }
+    try { const extra = additionalSheets[sheet]?.[address]; const cell = extra?.f || extra?.v != null ? extra : sheets[sheet]?.[address]; const value = cell?.f ? evaluate(parse(cell.f), sheet) : cell?.v ?? null; cache.set(key, value); return value }
     catch (e) { cache.set(key, e); throw e } finally { active.delete(key) }
   }
   function evaluate(node, sheet) {
@@ -75,6 +75,8 @@ export function inspectionCalculator(values) {
         if (left === null) left = typeof right === 'string' ? '' : 0
         if (right === null) right = typeof left === 'string' ? '' : 0
         if (typeof left === 'string' && typeof right === 'string') { left = left.toLocaleLowerCase(); right = right.toLocaleLowerCase() }
+        // Excel orders text above numbers for relational comparisons (e.g. '100 UR' > 0).
+        if (!['=', '<>'].includes(a)) { const rank = value => typeof value === 'boolean' ? 2 : typeof value === 'string' ? 1 : 0; if (rank(left) !== rank(right)) { const l = rank(left), r = rank(right); left = l; right = r } }
         return { '=': () => left === right, '<>': () => left !== right, '<': () => left < right, '>': () => left > right, '<=': () => left <= right, '>=': () => left >= right }[a]()
       }
       left = num(left); right = num(right)
@@ -114,5 +116,6 @@ export function inspectionCalculator(values) {
 
 export function inspectionRatingValues(values, layout = 'standard') {
   if (layout !== 'F') return values
-  return { ...values, 'Vnos podatkov!B29': 'ne', 'A!AB28': values[values['Vnos podatkov!B25'] === 'da' ? 'trimanje F!AF30' : 'F!AF30'] ?? null }
+  // Material condition uses the original offset, as in the F report's shared header.
+  return { ...values, 'Vnos podatkov!B29': 'ne', 'A!AB28': values['F!AF30'] ?? null }
 }

@@ -399,8 +399,8 @@
                     </q-btn>
                   </template>
                 </div>
-                <q-btn v-if="session.user?.admin && savedEquipmentOptions.some(option => Number(option.value) === Number(item.id))" flat dense no-caps icon="straighten" color="primary" class="q-mt-sm" :label="$t('inspection.title')" :to="`/servisi/${form.id}/meritve/${item.id}`" />
-                <q-btn v-if="session.user?.admin && savedEquipmentOptions.some(option => Number(option.value) === Number(item.id))" flat dense no-caps icon="table_view" color="primary" class="q-mt-sm" :label="$t('inspection.importTitle')" @click="inspectionImportEquipment = item" />
+                <q-btn v-if="session.user?.admin && savedEquipmentOptions.some(option => Number(option.value) === Number(item.id))" flat dense no-caps :icon="item.type === 'Jadralno padalo' ? 'straighten' : 'assignment_turned_in'" color="primary" class="q-mt-sm" :label="$t(item.type === 'Jadralno padalo' ? 'inspection.title' : item.type === 'Reševalno padalo' ? 'certificate.reserveTitle' : 'certificate.generalTitle')" :to="`/servisi/${form.id}/meritve/${item.id}`" />
+                <q-btn v-if="session.user?.admin && item.type === 'Jadralno padalo' && savedEquipmentOptions.some(option => Number(option.value) === Number(item.id))" flat dense no-caps icon="table_view" color="primary" class="q-mt-sm" :label="$t('inspection.importTitle')" @click="inspectionImportEquipment = item" />
               </div>
               <div>
                 <div class="text-caption text-grey-7 q-mb-sm">{{ $t('documents.reference') }}</div>
