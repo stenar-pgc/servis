@@ -57,6 +57,7 @@ export default defineRouter(() => {
           { path: '', redirect: '/servisi' },
           { path: 'servisi', component: () => import('../pages/OrdersPage.vue') },
           { path: 'servisi/:id/meritve/:equipmentId', component: () => import('../pages/InspectionPage.vue'), meta: { admin: true } },
+          { path: 'servisi/:id/porocila', component: () => import('../pages/OrderPage.vue') },
           { path: 'servisi/:id', component: () => import('../pages/OrderPage.vue') },
           { path: 'oprema', component: () => import('../pages/EquipmentPage.vue') },
           {
@@ -68,6 +69,11 @@ export default defineRouter(() => {
             path: 'agencije',
             component: () => import('../pages/DirectoryPage.vue'),
             meta: { admin: true, kind: 'agencies' }
+          },
+          {
+            path: 'popusti',
+            component: () => import('../pages/DirectoryPage.vue'),
+            meta: { admin: true, kind: 'discounts' }
           },
           {
             path: 'placila',

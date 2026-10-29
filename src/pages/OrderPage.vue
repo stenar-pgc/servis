@@ -15,9 +15,19 @@
           {{ $t(isNew ? 'orders.newService' : 'orders.servicing') }}
           <span v-if="!isNew" class="text-grey-5">{{ orderNumber(form.id) }}</span>
         </h1>
-        <p>{{ $t('orders.tagline') }}</p>
+        <p>{{ $t(reportsOnly ? 'documents.equipmentReports' : 'orders.tagline') }}</p>
       </div>
-      <StatusBadge v-if="!isNew" :value="form.status" />
+      <div class="column items-end q-gutter-sm">
+        <StatusBadge v-if="!isNew" :value="form.status" />
+        <q-btn
+          v-if="reportsOnly && !form.restricted && !loading && !loadError"
+          outline
+          no-caps
+          color="primary"
+          icon="receipt_long"
+          :label="$t('orders.fullOrder')"
+          :to="'/servisi/' + form.id" />
+      </div>
     </div>
     <ErrorBanner :message="loadError" retry @retry="load" />
     <q-inner-loading :showing="loading" />
@@ -41,9 +51,9 @@
       no-error-focus
       @validation-error="showValidationError"
       @submit="save">
-      <div class="order-grid">
+      <div class="order-grid" :class="{ 'reports-only': reportsOnly }">
         <div>
-          <q-card flat bordered class="q-mb-lg">
+          <q-card v-if="!reportsOnly" flat bordered class="q-mb-lg">
             <q-expansion-item v-model="sections.service" group="service-form" data-order-step="service">
               <template #header>
                 <q-item-section>
@@ -73,7 +83,7 @@
               </div>
             </q-expansion-item>
           </q-card>
-          <q-card flat bordered class="q-mb-lg">
+          <q-card v-if="!reportsOnly" flat bordered class="q-mb-lg">
             <q-expansion-item v-model="sections.contact" group="service-form" data-order-step="contact">
               <template #header>
                 <q-item-section>
@@ -198,7 +208,7 @@
               </div>
             </q-expansion-item>
           </q-card>
-          <q-card flat bordered class="q-mb-lg">
+          <q-card v-if="!reportsOnly" flat bordered class="q-mb-lg">
             <q-expansion-item v-model="sections.delivery" group="service-form" data-order-step="delivery">
               <template #header>
                 <q-item-section>
@@ -506,7 +516,7 @@
             </template>
             <ErrorBanner :message="documentError" class="q-mt-md" />
           </q-card>
-          <q-card v-if="!isNew && (session.user?.admin || invoices.length)" flat bordered class="section-card">
+          <q-card v-if="!isNew && !reportsOnly && (session.user?.admin || invoices.length)" flat bordered class="section-card">
             <h2>{{ $t('documents.invoice') }}</h2>
             <DocumentFiles
               :files="invoices"
@@ -599,7 +609,7 @@
             <q-btn v-if="commentId" flat no-caps :label="$t('common.cancel')" class="q-mt-md q-ml-sm" @click="commentId = null; comment = ''" />
           </q-card>
         </div>
-        <q-card flat bordered class="section-card summary-card">
+        <q-card v-if="!reportsOnly" flat bordered class="section-card summary-card">
 
           <h2 class="q-mb-lg">{{ $t('finance.estimate') }}</h2>
           <div v-for="item in selectedItems" :key="item.code" class="row no-wrap justify-between q-mb-md">
@@ -611,7 +621,7 @@
             <span>{{ money(shipping) }}</span>
           </div>
           <div v-if="Number(form.discount_amount)" class="row justify-between q-mb-md">
-            <span class="text-grey-7">{{ $t('finance.discount') }}</span>
+            <span class="text-grey-7">{{ $t('finance.discount') }}<template v-if="form.applied_discount_code"> ({{ form.applied_discount_code }})</template></span>
             <span>−{{ money(form.discount_amount) }}</span>
           </div>
           <q-separator class="q-my-lg" />
@@ -753,9 +763,12 @@
     publicMode = route.path === '/narocilo',
     isNew = publicMode || route.params.id === 'novo'
   const sections = reactive({ service: true, contact: false, delivery: false })
+  // Customers open equipment and reports first; owners who did not order the service only get this view.
+  const reportsOnly = computed(() => !isNew && !session.user?.admin && (route.path.endsWith('/porocila') || form.restricted))
   const readonly = !isNew && !session.user?.admin
   const form = reactive({
     id: null,
+    restricted: false,
     submitted_date: new Date().toLocaleDateString('sv-SE'),
     equipment_ids: [],
     description: '',
@@ -825,6 +838,7 @@
   const hasDiscount = ref(false)
   const review = ref(false)
   const agencies = ref([])
+  const discounts = ref([])
   const equipmentToAdd = ref(null)
   const documentEditor = ref(false)
   const reportEquipmentId = ref(null)
@@ -993,13 +1007,14 @@
     (form.pickup_same_address || form.pickup_country === 'SI') &&
     (form.shipping_same_address || form.shipping_country === 'SI')
   )
-  watch(glsAvailable, available => {
-    if (!readonly && !loading.value && !available && form.delivery === 'gls') form.delivery = 'post'
-  })
+  // Preview the agency of an entered code; the server validates the code and assigns the agency on save.
   watch(() => form.discount_code, code => {
     if (!session.user?.admin || !code.trim()) return
-    const agency = agencies.value.find(item => item.active && item.code?.toUpperCase() === code.trim().toUpperCase())
-    if (agency) form.agency_id = agency.id
+    const discount = discounts.value.find(item => Number(item.active) && item.code.toUpperCase() === code.trim().toUpperCase())
+    if (discount?.agency_id) form.agency_id = discount.agency_id
+  })
+  watch(glsAvailable, available => {
+    if (!readonly && !loading.value && !available && form.delivery === 'gls') form.delivery = 'post'
   })
   const translatedDeliveries = computed(() =>
     deliveries.filter(d => d.value !== 'gls' || glsAvailable.value).map(d => ({
@@ -1032,12 +1047,14 @@
         api('catalog'),
         publicMode ? [] : api('equipment'),
         session.user?.admin ? api('customers') : [],
-        session.user?.admin ? api('agencies') : []
+        session.user?.admin ? api('agencies') : [],
+        session.user?.admin ? api('discounts') : []
       ])
       catalog.value = result[0]
       equipment.value = result[1]
       customers.value = result[2]
       agencies.value = result[3]
+      discounts.value = result[4]
       for (const item of catalog.value) form.quantities[item.code] = 0
       if (isNew) {
         form.contact_address = session.user?.admin ? '' : session.user?.address || ''
@@ -1059,6 +1076,7 @@
           await router.replace('/servisi/' + route.params.id)
         }
         const order = await api('order/' + route.params.id)
+        if (order.restricted && !route.path.endsWith('/porocila')) router.replace('/servisi/' + route.params.id + '/porocila')
         Object.assign(form, order, {
           submitted_date: order.created_at?.slice(0, 10) || '',
           equipment_ids: (order.equipment_ids || (order.equipment_id ? [order.equipment_id] : [])).map(Number),

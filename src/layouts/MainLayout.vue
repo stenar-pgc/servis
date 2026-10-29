@@ -80,6 +80,7 @@
       ? [
           { to: '/stranke', icon: 'people_outline', label: 'customers.title' },
           { to: '/agencije', icon: 'handshake', label: 'agencies.title' },
+          { to: '/popusti', icon: 'sell', label: 'discounts.title' },
           { to: '/placila', icon: 'account_balance_wallet', label: 'payouts.title' }
         ]
       : []),

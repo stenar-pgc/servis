@@ -60,12 +60,19 @@
     </q-card>
     <template v-else-if="tab === 'commissions'">
       <q-card flat bordered class="section-card">
-        <div class="text-grey-7">{{ $t('agencies.myCode') }}</div>
-        <div class="row items-center justify-between">
-          <h2 class="q-mt-sm">{{ commissions.agency.code }}</h2>
-          <q-btn flat no-caps icon="content_copy" :label="$t('common.copy')" @click="copyCode" />
+        <div class="text-grey-7">{{ $t('discounts.myCodes') }}</div>
+        <div v-if="!commissions.discounts?.length" class="q-mt-sm text-grey-6">{{ $t('discounts.noCodes') }}</div>
+        <div v-for="code in commissions.discounts" :key="code.code" class="row items-center justify-between q-mt-sm">
+          <div>
+            <h2 class="q-my-none">{{ code.code }}</h2>
+            <div class="text-caption text-grey-7">
+              {{ code.discount_type === 'fixed' ? money(code.discount_value) : Number(code.discount_value) + ' %' }} {{ $t('agencies.discountSuffix') }}
+              · {{ code.valid_from || code.valid_to ? [code.valid_from && $t('discounts.from', { date: date(code.valid_from) }), code.valid_to && $t('discounts.to', { date: date(code.valid_to) })].filter(Boolean).join(' ') : $t('discounts.unlimited') }}
+              <q-badge v-if="!Number(code.active)" color="grey-2" text-color="grey-7" class="q-ml-xs">{{ $t('discounts.disabled') }}</q-badge>
+            </div>
+          </div>
+          <q-btn flat no-caps icon="content_copy" :label="$t('common.copy')" @click="copyCode(code.code)" />
         </div>
-        <div class="q-mt-sm">{{ commissions.agency.discount_percent }} % {{ $t('agencies.discountSuffix') }}</div>
       </q-card>
       <q-select
         outlined
@@ -204,9 +211,9 @@
     },
     { name: 'status', field: 'status', label: t('common.status'), align: 'left' }
   ])
-  async function copyCode() {
+  async function copyCode(code) {
     try {
-      await navigator.clipboard.writeText(commissions.value.agency.code)
+      await navigator.clipboard.writeText(code)
       q.notify({ type: 'positive', message: t('agencies.codeCopied') })
     } catch (error) {
       q.notify({ type: 'negative', message: error.message })

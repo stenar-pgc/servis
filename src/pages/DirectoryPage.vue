@@ -40,7 +40,7 @@
         </q-input>
         <q-space />
         <q-select
-          v-if="kind === 'payments'"
+          v-if="kind === 'payments' || kind === 'discounts'"
           outlined
           dense
           v-model="agencyFilter"
@@ -103,10 +103,17 @@
       </template>
       <template #body-cell-code="p">
         <q-td :props="p">
-          <div class="table-title">{{ p.row.code }}</div>
-          <div class="table-sub">{{ p.row.discount_percent }} % {{ $t('agencies.discountSuffix') }}</div>
+          <div :class="p.row.discount_codes ? 'table-title' : 'text-grey-6'">{{ p.row.discount_codes ? p.row.discount_codes.split(',').join(', ') : $t('discounts.noCodes') }}</div>
           <q-badge v-if="!Number(p.row.active)" color="grey-2" text-color="grey-7">
             {{ $t('agencies.inactive') }}
+          </q-badge>
+        </q-td>
+      </template>
+      <template #body-cell-discountCode="p">
+        <q-td :props="p">
+          <div class="table-title">{{ p.row.code }}</div>
+          <q-badge :color="discountStates[discountState(p.row)].bg" :text-color="discountStates[discountState(p.row)].color">
+            {{ $t('discounts.' + discountState(p.row)) }}
           </q-badge>
         </q-td>
       </template>
@@ -250,22 +257,6 @@
               <q-input
                 outlined
                 dense
-                v-model="form.code"
-                :label="$t('agencies.discountCode') + ' *'"
-                class="wide"
-                :rules="[required]" />
-              <q-input
-                outlined
-                dense
-                v-model.number="form.discount_percent"
-                type="number"
-                min="0"
-                max="100"
-                step="0.01"
-                :label="$t('agencies.discountPercent')" />
-              <q-input
-                outlined
-                dense
                 v-model.number="form.commission_percent"
                 type="number"
                 min="0"
@@ -273,6 +264,73 @@
                 step="0.01"
                 :label="$t('agencies.commissionPercent')" />
               <q-toggle v-model="form.active" :true-value="1" :false-value="0" :label="$t('agencies.active')" />
+              <p class="wide text-caption text-grey-6 q-mb-none">
+                {{ form.discount_codes ? $t('discounts.agencyCodes') + ': ' + form.discount_codes.split(',').join(', ') + '. ' : '' }}
+                <router-link to="/popusti">{{ $t('discounts.codesHint') }}</router-link>
+              </p>
+            </template>
+            <template v-if="kind === 'discounts'">
+              <q-input
+                outlined
+                dense
+                :model-value="form.code"
+                :label="$t('discounts.code') + ' *'"
+                class="wide"
+                maxlength="40"
+                :rules="[required, v => /^[A-Za-z0-9_-]+$/.test(v) || t('errors.codeCharacters')]"
+                @update:model-value="value => (form.code = String(value || '').toUpperCase())" />
+              <q-btn-toggle
+                v-model="form.discount_type"
+                class="wide discount-type"
+                spread
+                no-caps
+                unelevated
+                toggle-color="primary"
+                :options="[
+                  { value: 'percent', label: $t('discounts.percent') },
+                  { value: 'fixed', label: $t('discounts.fixed') }
+                ]" />
+              <q-input
+                outlined
+                dense
+                v-model.number="form.discount_value"
+                type="number"
+                min="0.01"
+                :max="form.discount_type === 'percent' ? 100 : undefined"
+                step="0.01"
+                :label="$t(form.discount_type === 'percent' ? 'discounts.percentValue' : 'discounts.fixedValue') + ' *'"
+                :rules="[v => (v > 0 && (form.discount_type !== 'percent' || v <= 100)) || t('validation.required')]" />
+              <q-select
+                outlined
+                dense
+                v-model="form.agency_id"
+                :options="agencies"
+                option-value="id"
+                option-label="name"
+                emit-value
+                map-options
+                clearable
+                :label="$t('discounts.agency')" />
+              <q-toggle v-model="form.unlimited" :label="$t('discounts.unlimitedValidity')" class="wide" />
+              <template v-if="!form.unlimited">
+                <q-input
+                  outlined
+                  dense
+                  v-model="form.valid_from"
+                  type="date"
+                  stack-label
+                  :label="$t('discounts.validFrom')"
+                  :rules="[v => !!v || !!form.valid_to || t('validation.required')]" />
+                <q-input
+                  outlined
+                  dense
+                  v-model="form.valid_to"
+                  type="date"
+                  stack-label
+                  :label="$t('discounts.validTo')"
+                  :rules="[v => !!v || !!form.valid_from || t('validation.required'), v => !v || !form.valid_from || v >= form.valid_from || t('errors.discountValidity')]" />
+              </template>
+              <q-toggle v-model="form.active" :true-value="1" :false-value="0" :label="$t('discounts.active')" class="wide" />
             </template>
             <template v-if="kind === 'payments'">
               <q-select
@@ -364,6 +422,14 @@
       icon: 'handshake',
       save: 'saveagency'
     },
+    discounts: {
+      title: 'discounts.title',
+      subtitle: 'discounts.subtitle',
+      add: 'discounts.new',
+      search: 'discounts.search',
+      icon: 'sell',
+      save: 'savediscount'
+    },
     payments: {
       title: 'payouts.title',
       subtitle: 'payouts.subtitle',
@@ -402,6 +468,23 @@
           (accountFilter.value === 'registered' ? !!r.user_id : !r.user_id))
     )
   )
+  const today = new Date().toLocaleDateString('sv-SE')
+  const discountState = r =>
+    !Number(r.active) ? 'disabled' : r.valid_to && r.valid_to < today ? 'expired' : r.valid_from && r.valid_from > today ? 'upcoming' : 'enabled'
+  const discountStates = {
+    enabled: { bg: 'teal-1', color: 'primary' },
+    disabled: { bg: 'grey-2', color: 'grey-7' },
+    expired: { bg: 'red-1', color: 'red-8' },
+    upcoming: { bg: 'orange-1', color: 'orange-9' }
+  }
+  const validity = r =>
+    r.valid_from && r.valid_to
+      ? date(r.valid_from) + ' – ' + date(r.valid_to)
+      : r.valid_from
+        ? t('discounts.from', { date: date(r.valid_from) })
+        : r.valid_to
+          ? t('discounts.to', { date: date(r.valid_to) })
+          : t('discounts.unlimited')
   const sum = field => rows.value.reduce((s, r) => s + Number(r[field] || 0), 0)
   const stats = computed(() =>
     kind === 'customers'
@@ -415,6 +498,12 @@
             { label: 'agencies.title', value: rows.value.length },
             { label: 'agencies.earned', value: money(sum('earned')) },
             { label: 'agencies.outstanding', value: money(sum('earned') - sum('paid')) }
+          ]
+        : kind === 'discounts'
+        ? [
+            { label: 'discounts.count', value: rows.value.length },
+            { label: 'discounts.activeCount', value: rows.value.filter(r => discountState(r) === 'enabled').length },
+            { label: 'discounts.used', value: sum('order_count') }
           ]
         : [
             { label: 'payouts.totalPaid', value: money(sum('amount')) },
@@ -433,11 +522,19 @@
       : kind === 'agencies'
         ? [
             { name: 'name', field: 'name', label: t('agencies.agency') },
-            { name: 'code', field: 'code', label: t('agencies.codeDiscount') },
+            { name: 'code', field: 'discount_codes', label: t('discounts.agencyCodes') },
             { name: 'customers', field: 'customer_count', label: t('customers.title') },
             { name: 'orders', field: 'order_count', label: t('services.title') },
             { name: 'earned', field: r => money(r.earned), label: t('agencies.commissions') },
             { name: 'balance', field: r => money(r.earned - r.paid), label: t('agencies.outstanding') }
+          ]
+        : kind === 'discounts'
+        ? [
+            { name: 'discountCode', field: 'code', label: t('discounts.code') },
+            { name: 'discount', field: r => (r.discount_type === 'fixed' ? money(r.discount_value) : Number(r.discount_value) + ' %'), label: t('discounts.discount') },
+            { name: 'validity', field: validity, label: t('discounts.validity') },
+            { name: 'agency', field: r => r.agency_name || t('discounts.noAgency'), label: t('agencies.agency') },
+            { name: 'orders', field: r => Number(r.order_count || 0), label: t('discounts.used') }
           ]
         : [
             { name: 'date', field: r => date(r.paid_at), label: t('common.date') },
@@ -458,11 +555,11 @@
   }
   function removeRow(row) {
     if (kind === 'customers') { customerToDelete.value = row; return }
-    const group = kind === 'customers' ? 'customers' : kind === 'agencies' ? 'agencies' : 'payouts'
-    const action = { customers: 'deletecustomer', agencies: 'deleteagency', payments: 'deletepayment' }[kind]
+    const group = { agencies: 'agencies', discounts: 'discounts', payments: 'payouts' }[kind]
+    const action = { agencies: 'deleteagency', discounts: 'deletediscount', payments: 'deletepayment' }[kind]
     confirmDeletion(q, {
       title: t(group + '.deleteTitle'),
-      message: t(group + '.deleteConfirm', { name: row.name || row.agency_name, amount: money(row.amount), date: date(row.paid_at) }),
+      message: t(group + '.deleteConfirm', { name: kind === 'discounts' ? row.code : row.name || row.agency_name, amount: money(row.amount), date: date(row.paid_at) }),
       action: () => api(action, { id: row.id }),
       onDeleted: load,
       onError: message => { error.value = message },
@@ -547,7 +644,10 @@
         user_id: null,
         customer_id: null,
         code: '',
-        discount_percent: 0,
+        discount_type: 'percent',
+        discount_value: null,
+        valid_from: '',
+        valid_to: '',
         commission_percent: 0,
         active: 1,
         agency_id: null,
@@ -558,6 +658,8 @@
       row || {}
     )
     form.active = Number(form.active) === 1 ? 1 : 0
+    form.unlimited = !form.valid_from && !form.valid_to
+    if (form.discount_value != null) form.discount_value = Number(form.discount_value)
     saveError.value = ''
     editor.value = true
   }
@@ -568,7 +670,7 @@
       const result = await Promise.all([
         api(kind),
         kind === 'agencies' ? api('customers') : [],
-        kind === 'payments' ? api('agencies') : []
+        kind === 'payments' || kind === 'discounts' ? api('agencies') : []
       ])
       rows.value = result[0]
       customers.value = result[1]
@@ -583,7 +685,7 @@
     saving.value = true
     saveError.value = ''
     try {
-      const result = await api(config.save, form)
+      const result = await api(config.save, kind === 'discounts' && form.unlimited ? { ...form, valid_from: null, valid_to: null } : form)
       editor.value = false
       await load()
       if (result.access_sent === false) error.value = t('errors.emailFailed')
@@ -597,6 +699,7 @@
 </script>
 <style scoped>
   .directory-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .discount-type { border: 1px solid #cfe6ee; border-radius: 8px; }
   @media (max-width: 599px) { .directory-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .customer-identity { display: flex; align-items: center; gap: 12px; }
   .customer-account-icon { flex-shrink: 0; padding: 10px; border-radius: 50%; }

@@ -59,7 +59,7 @@
         </template>
         <template #body-cell-id="p">
           <q-td :props="p">
-            <router-link class="table-title" :to="'/servisi/' + p.row.id" @click.stop>{{ orderNumber(p.row.id) }}</router-link>
+            <router-link class="table-title" :to="orderPath(p.row)" @click.stop>{{ orderNumber(p.row.id) }}</router-link>
             <div class="table-sub">{{ date(p.row.created_at) }}</div>
           </q-td>
         </template>
@@ -71,7 +71,7 @@
             <router-link v-else-if="p.row.equipment_id && Number(p.row.equipment_count || 1) === 1" class="table-title" :to="{ path: '/servisi', query: { equipment: p.row.equipment_id } }" @click.stop>{{ p.row.equipment_label || equipmentLabel(p.row) || $t('equipment.title') }}</router-link>
             <div v-else-if="p.row.equipment_count" class="table-title">{{ p.row.equipment_label }}</div>
             <div v-else class="table-title">{{ $t('equipment.unassigned') }}</div>
-            <div class="table-sub"><router-link v-if="p.row.customer_id != null" :to="{ path: '/servisi', query: { customer: p.row.customer_id } }" @click.stop>{{ p.row.customer_name }}</router-link><span v-else>{{ p.row.customer_name || $t('customers.unassigned') }}</span></div>
+            <div v-if="session.user.admin" class="table-sub"><router-link v-if="p.row.customer_id != null" :to="{ path: '/servisi', query: { customer: p.row.customer_id } }" @click.stop>{{ p.row.customer_name }}</router-link><span v-else>{{ p.row.customer_name || $t('customers.unassigned') }}</span></div>
             <q-badge v-if="p.row.confirmation_pending" color="orange-1" text-color="orange-9">
               {{ $t('orders.confirmationPending') }}
             </q-badge>
@@ -103,9 +103,10 @@
         </template>
         <template #body-cell-action="p">
           <q-td :props="p" @click.stop>
-            <q-btn flat round dense icon="arrow_forward" :to="'/servisi/' + p.row.id" :aria-label="$t('orders.open')">
+            <q-btn v-if="session.user.admin" flat round dense icon="arrow_forward" :to="'/servisi/' + p.row.id" :aria-label="$t('orders.open')">
               <q-tooltip>{{ $t('orders.open') }}</q-tooltip>
             </q-btn>
+            <q-btn v-else-if="p.row.is_orderer" outline dense no-caps color="primary" icon="receipt_long" :label="$t('orders.fullOrder')" :to="'/servisi/' + p.row.id" class="q-px-sm text-no-wrap" />
             <q-btn v-if="session.user.admin" flat round dense color="negative" icon="delete_outline" :aria-label="$t('orders.delete')" :disable="deleting" @click.stop="removeOrder(p.row.id)">
               <q-tooltip>{{ $t('orders.delete') }}</q-tooltip>
             </q-btn>
@@ -191,8 +192,10 @@
       count: scopedRows.value.filter(matchers.completed).length
     }
   ])
+  // Customers open equipment and reports; the full order stays a separate action for its orderer.
+  const orderPath = row => '/servisi/' + row.id + (session.user.admin ? '' : '/porocila')
   function openOrder(event, row) {
-    if (isRowNavigation(event)) router.push('/servisi/' + row.id)
+    if (isRowNavigation(event)) router.push(orderPath(row))
   }
   watch(() => [route.query.customer, route.query.equipment], () => {
     filter.value = 'all'
@@ -207,7 +210,7 @@
     { name: 'id', label: t('orders.order'), field: row => Number(row.id), align: 'left', sortable: true },
     {
       name: 'equipment',
-      label: t('orders.equipmentCustomer'),
+      label: t(session.user.admin ? 'orders.equipmentCustomer' : 'equipment.title'),
       field: r => `${r.equipment_label || ''} ${r.manufacturer || ''} ${r.model || ''} ${r.customer_name || ''}`,
       align: 'left'
     },
