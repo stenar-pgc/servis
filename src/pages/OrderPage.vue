@@ -886,13 +886,7 @@
     sending = ref(false)
   const equipmentOptions = computed(() =>
     equipment.value
-      .filter(
-        e =>
-          !form.equipment_ids.includes(Number(e.id)) &&
-          (newCustomer.value
-            ? !e.customer_id
-            : !customerId.value || !e.customer_id || Number(e.customer_id) === Number(customerId.value))
-      )
+      .filter(e => !form.equipment_ids.includes(Number(e.id)))
       .map(e => ({
         value: Number(e.id),
         label: `${e.manufacturer} ${e.model} ${e.size} · ${e.serial || ''}${session.user?.admin ? ' · ' + (e.customer_name || t('equipment.noOwner')) : ''}`
