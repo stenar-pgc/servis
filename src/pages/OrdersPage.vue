@@ -197,7 +197,7 @@
     search.value = ''
   }
   const columns = computed(() => [
-    { name: 'id', label: t('orders.order'), field: 'id', align: 'left', sortable: true },
+    { name: 'id', label: t('orders.order'), field: row => Number(row.id), align: 'left', sortable: true },
     {
       name: 'equipment',
       label: t('orders.equipmentCustomer'),

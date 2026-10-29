@@ -145,6 +145,7 @@ export default {
     }
 },
   delivery: {
+    glsDomesticOnly: 'GLS prevzem je na voljo samo v Sloveniji.',
     pickupAddress: 'Naslov za GLS prevzem opreme',
     returnAddress: 'Naslov za vračilo opreme',
     pickupSame: 'Prevzem opreme na naslovu stranke',
@@ -371,6 +372,7 @@ export default {
     invoiceExists: 'Servis že ima račun. Pred nalaganjem novega odstranite obstoječi račun.'
   },
   orders: {
+    submittedDate: 'Datum oddaje naročila',
     delete: 'Izbriši servis',
     deleteConfirm: 'Izbrišem servis {number}? Izbrisani bodo tudi njegovi PDF-ji, komentarji in izbrane storitve. Stranka in oprema ostaneta shranjeni.',
     confirmationPending: 'Čaka na potrditev stranke',
@@ -598,9 +600,9 @@ export default {
   statuses: {
     awaitingArrival: 'Čakanje prevzema',
     inService: 'Na servisu',
-    completedServices: 'Zaključeni servisi',
+    completedServices: 'Opravljeni servisi',
     submitted: 'Oddano naročilo',
-    completed: 'Servis zaključen',
+    completed: 'Servis opravljen',
     cancelled: 'Preklicano'
   },
   equipmentTypes: {

@@ -145,12 +145,13 @@ export default {
     }
 },
   delivery: {
+    glsDomesticOnly: 'GLS collection is available only in Slovenia.',
     pickupAddress: 'GLS collection address',
     returnAddress: 'Equipment return address',
     pickupSame: "Collect the equipment from the customer's address",
     returnSame: "Return the equipment to the customer's address",
     incompleteAddress: 'Complete the customer address or the alternative collection and return addresses.',
-    personal: 'I will deliver and collect the equipment in person (Škofja Loka, Dražgoše, on site).',
+    personal: 'I will deliver and collect the equipment at your office in Slovenia.',
     post: 'I will arrange shipping to your address; please return the equipment by post after servicing (+{price}).',
     gls: 'Please send a GLS courier to collect the equipment from my address and return it by post after servicing (+€10).',
     other: 'Another option.',
@@ -371,6 +372,7 @@ export default {
     invoiceExists: 'This order already has an invoice. Remove it before uploading another invoice.'
   },
   orders: {
+    submittedDate: 'Order submission date',
     delete: 'Delete service order',
     deleteConfirm: 'Delete service order {number}? Its PDFs, comments and service items will also be deleted. The customer and equipment are kept.',
     confirmationPending: 'Awaiting customer confirmation',
@@ -599,9 +601,9 @@ export default {
   statuses: {
     awaitingArrival: 'Awaiting arrival',
     inService: 'In service',
-    completedServices: 'Completed services',
+    completedServices: 'Services performed',
     submitted: 'Order submitted',
-    completed: 'Service completed',
+    completed: 'Service performed',
     cancelled: 'Cancelled'
   },
   equipmentTypes: {

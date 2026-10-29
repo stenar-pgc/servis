@@ -278,6 +278,13 @@
                 emit-value
                 map-options
                 :label="$t('orders.status')" />
+              <q-input
+                outlined
+                type="date"
+                v-model="form.submitted_date"
+                :label="$t('orders.submittedDate')"
+                :rules="[required]"
+                class="q-mt-md" />
               <q-expansion-item
                 icon="account_balance_wallet"
                 v-if="editing"
@@ -747,6 +754,7 @@
   const readonly = !isNew && !session.user?.admin
   const form = reactive({
     id: null,
+    submitted_date: new Date().toLocaleDateString('sv-SE'),
     equipment_ids: [],
     description: '',
     status: 'submitted',
@@ -967,8 +975,21 @@
     form.contact_postal_code = value ? '' : owner.value?.postal_code || ''
     form.contact_city = value ? '' : owner.value?.city || ''
   })
+  const glsAvailable = computed(() =>
+    form.contact_country === 'SI' &&
+    (form.pickup_same_address || form.pickup_country === 'SI') &&
+    (form.shipping_same_address || form.shipping_country === 'SI')
+  )
+  watch(glsAvailable, available => {
+    if (!readonly && !loading.value && !available && form.delivery === 'gls') form.delivery = 'post'
+  })
+  watch(() => form.discount_code, code => {
+    if (!session.user?.admin || !code.trim()) return
+    const agency = agencies.value.find(item => item.active && item.code?.toUpperCase() === code.trim().toUpperCase())
+    if (agency) form.agency_id = agency.id
+  })
   const translatedDeliveries = computed(() =>
-    deliveries.map(d => ({
+    deliveries.filter(d => d.value !== 'gls' || glsAvailable.value).map(d => ({
       ...d,
       label: t(d.label, { price: money(postalRate(returnCountry.value)) })
     }))
@@ -1026,6 +1047,7 @@
         }
         const order = await api('order/' + route.params.id)
         Object.assign(form, order, {
+          submitted_date: order.created_at?.slice(0, 10) || '',
           equipment_ids: (order.equipment_ids || (order.equipment_id ? [order.equipment_id] : [])).map(Number),
           shipping_same_address: order.shipping_same_address == null || !!Number(order.shipping_same_address),
           pickup_same_address: order.pickup_same_address == null || !!Number(order.pickup_same_address),
