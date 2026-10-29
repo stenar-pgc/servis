@@ -280,10 +280,12 @@
                 :label="$t('orders.status')" />
               <q-input
                 outlined
-                type="date"
-                v-model="form.submitted_date"
+                v-model="submittedDate"
+                mask="##.##.####"
+                placeholder="dd.mm.yyyy"
+                inputmode="numeric"
                 :label="$t('orders.submittedDate')"
-                :rules="[required]"
+                :rules="[required, validSubmittedDate]"
                 class="q-mt-md" />
               <q-expansion-item
                 icon="account_balance_wallet"
@@ -856,6 +858,23 @@
       .map(item => ({ value: Number(item.id), label: equipmentLabel(item) }))
   )
   const editing = computed(() => ['in_service', 'completed'].includes(form.status))
+  const submittedDate = computed({
+    get: () => /^\d{4}-\d{2}-\d{2}$/.test(form.submitted_date)
+      ? form.submitted_date.split('-').reverse().join('.')
+      : form.submitted_date,
+    set: value => {
+      form.submitted_date = /^\d{2}\.\d{2}\.\d{4}$/.test(value)
+        ? value.split('.').reverse().join('-')
+        : value
+    }
+  })
+  function validSubmittedDate(value) {
+    const parts = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(value)
+    if (!parts) return t('errors.invalidDate')
+    const [, day, month, year] = parts
+    const date = new Date(`${year}-${month}-${day}T12:00:00`)
+    return (date.getFullYear() === Number(year) && date.getMonth() + 1 === Number(month) && date.getDate() === Number(day)) || t('errors.invalidDate')
+  }
   const required = v => !!String(v || '').trim() || t('validation.required')
   const email = reactive({
     recipient: 'customer',
