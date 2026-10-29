@@ -534,14 +534,24 @@
               :label="$t('documents.addInvoice')"
               class="q-mt-md"
               @click="openUpload('invoice')" />
-            <q-btn
-              v-if="session.user?.admin && editing"
-              outline
-              no-caps
-              icon="note_add"
-              :label="$t('orders.createInvoice')"
-              disable
-              class="full-width q-mt-md" />
+            <template v-if="session.user?.admin">
+              <q-separator class="q-my-md" />
+              <div v-if="form.cebelca_invoice_id" class="text-caption text-grey-7">
+                {{ $t('cebelca.created', { id: form.cebelca_invoice_id, date: date(form.cebelca_invoice_at) }) }}
+              </div>
+              <ErrorBanner :message="cebelcaError" class="q-mt-sm" />
+              <q-btn
+                outline
+                no-caps
+                color="primary"
+                icon="receipt_long"
+                :label="$t(form.cebelca_invoice_id ? 'cebelca.again' : 'cebelca.create')"
+                :loading="creatingInvoice"
+                :disable="!savedCustomer"
+                class="full-width q-mt-sm"
+                @click="createCebelcaInvoice" />
+              <div class="text-caption text-grey-6 q-mt-sm">{{ $t(savedCustomer ? 'cebelca.hint' : 'cebelca.needsCustomer') }}</div>
+            </template>
           </q-card>
           <q-card v-if="session.user?.admin && documents.length" flat bordered class="section-card">
             <q-expansion-item
@@ -769,6 +779,8 @@
   const form = reactive({
     id: null,
     restricted: false,
+    cebelca_invoice_id: null,
+    cebelca_invoice_at: null,
     submitted_date: new Date().toLocaleDateString('sv-SE'),
     equipment_ids: [],
     description: '',
@@ -1305,6 +1317,30 @@
       onError: message => { commentError.value = message }
     })
   }
+  // The invoice is built on the server from the saved order, so unsaved edits are not included.
+  const creatingInvoice = ref(false),
+    cebelcaError = ref('')
+  const savedCustomer = computed(() => !!(form.customer_id || form.customer_user_id))
+  function createCebelcaInvoice() {
+    q.dialog({
+      title: t('cebelca.create'),
+      message: t(form.cebelca_invoice_id ? 'cebelca.confirmAgain' : 'cebelca.confirm', { total: money(form.total), id: form.cebelca_invoice_id }),
+      cancel: { label: t('common.cancel'), flat: true, noCaps: true },
+      ok: { label: t('cebelca.createShort'), color: 'primary', unelevated: true, noCaps: true }
+    }).onOk(async () => {
+      creatingInvoice.value = true
+      cebelcaError.value = ''
+      try {
+        Object.assign(form, await api('cebelcainvoice', { order_id: form.id, force: !!form.cebelca_invoice_id }))
+        q.notify({ type: 'positive', message: t('cebelca.done') })
+      } catch (e) {
+        cebelcaError.value = e.message
+      } finally {
+        creatingInvoice.value = false
+      }
+    })
+  }
+
   function removeOrder() {
     confirmDeletion(q, {
       title: t('orders.delete'), message: t('orders.deleteConfirm', { number: orderNumber(form.id) }),

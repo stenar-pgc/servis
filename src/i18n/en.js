@@ -363,6 +363,11 @@ export default {
     discountCode: 'Invalid discount code.',
     codeCharacters: 'Codes may contain letters, numbers, - and _.',
     discountCodeExists: 'This discount code already exists.',
+    cebelcaExists: 'A Čebelca invoice has already been created for this order.',
+    cebelcaCustomer: 'Assign a customer to the order before invoicing.',
+    cebelcaNoItems: 'The order has no services to invoice.',
+    cebelcaPartner: 'Čebelca did not confirm the customer. No invoice was created.',
+    cebelcaFailed: 'Čebelca did not create the invoice.',
     discountValidity: 'The end of validity must be after its start.',
     discountUsed: 'A discount used by orders cannot be deleted. Switch it off instead.',
     paymentDetails: 'Enter a payment amount and date.',
@@ -476,6 +481,17 @@ export default {
     noCodes: 'No code',
     myCodes: 'My discount codes',
     codesHint: 'Discount codes are managed under Discounts.'
+  },
+  cebelca: {
+    create: 'Create invoice in Čebelca',
+    again: 'Create Čebelca invoice again',
+    createShort: 'Create invoice',
+    confirm: 'Create a draft invoice in Čebelca for {total}? The saved order details are used; save any changes first.',
+    confirmAgain: 'A Čebelca draft already exists for this order (ID {id}). Create a new draft for {total}? Delete the previous one in Čebelca if needed.',
+    created: 'Čebelca draft invoice created {date} (ID {id}).',
+    done: 'The draft invoice was created in Čebelca.',
+    hint: 'Creates a draft invoice with services, delivery and discount (prices incl. VAT). Finalize and send it in Čebelca.',
+    needsCustomer: 'Assign a customer to the order and save it before invoicing.'
   },
   auth: {
     optionalPassword: 'Use your permanent email link to sign in. You can also set a password if you prefer.',

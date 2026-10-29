@@ -363,6 +363,11 @@ export default {
     discountCode: 'Koda za popust ni veljavna.',
     codeCharacters: 'Koda sme vsebovati črke, številke, - in _.',
     discountCodeExists: 'Koda za popust že obstaja.',
+    cebelcaExists: 'Račun za to naročilo je v Čebelci že ustvarjen.',
+    cebelcaCustomer: 'Pred izdajo računa naročilu dodelite stranko.',
+    cebelcaNoItems: 'Naročilo nima storitev za račun.',
+    cebelcaPartner: 'Čebelca ni potrdila stranke. Račun ni bil ustvarjen.',
+    cebelcaFailed: 'Čebelca ni ustvarila računa.',
     discountValidity: 'Konec veljavnosti mora biti po začetku.',
     discountUsed: 'Popusta, uporabljenega pri naročilih, ni mogoče izbrisati. Izklopite ga.',
     paymentDetails: 'Vnesite znesek in datum plačila.',
@@ -476,6 +481,17 @@ export default {
     noCodes: 'Brez kode',
     myCodes: 'Moje kode za popust',
     codesHint: 'Kode za popust urejate v razdelku Popusti.'
+  },
+  cebelca: {
+    create: 'Ustvari račun v Čebelci',
+    again: 'Ponovno ustvari račun v Čebelci',
+    createShort: 'Ustvari račun',
+    confirm: 'Ustvarim osnutek računa v Čebelci za {total}? Uporabijo se shranjeni podatki naročila; neshranjene spremembe najprej shranite.',
+    confirmAgain: 'Za to naročilo že obstaja osnutek v Čebelci (ID {id}). Ustvarim nov osnutek za {total}? Prejšnjega po potrebi izbrišite v Čebelci.',
+    created: 'Osnutek računa v Čebelci ustvarjen {date} (ID {id}).',
+    done: 'Osnutek računa je ustvarjen v Čebelci.',
+    hint: 'Ustvari se osnutek računa s storitvami, dostavo in popustom (cene z DDV). Račun dokončate in pošljete v Čebelci.',
+    needsCustomer: 'Za račun naročilu najprej dodelite stranko in ga shranite.'
   },
   auth: {
     optionalPassword: 'Prijavite se lahko s trajno e-poštno povezavo. Če želite, lahko nastavite tudi geslo.',
