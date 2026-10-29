@@ -389,6 +389,7 @@ export default {
     new: 'Novo naročilo',
     all: 'Vsa naročila',
     search: 'Išči naročilo, stranko ali opremo …',
+    searchOwn: 'Išči naročilo ali opremo …',
     register: 'Evidenca servisov',
     open: 'Odpri naročilo',
     emptyTitle: 'Vaše prvo naročilo se začne tukaj',
@@ -603,6 +604,7 @@ export default {
     completedServices: 'Opravljeni servisi',
     submitted: 'Oddano naročilo',
     completed: 'Servis opravljen',
+    closed: 'Servis zaključen',
     cancelled: 'Preklicano'
   },
   equipmentTypes: {

@@ -389,6 +389,7 @@ export default {
     new: 'New order',
     all: 'All orders',
     search: 'Search orders, customers or equipment …',
+    searchOwn: 'Search orders or equipment …',
     register: 'Service register',
     open: 'Open order',
     emptyTitle: 'Your first order starts here',
@@ -604,6 +605,7 @@ export default {
     completedServices: 'Services performed',
     submitted: 'Order submitted',
     completed: 'Service performed',
+    closed: 'Service closed',
     cancelled: 'Cancelled'
   },
   equipmentTypes: {

@@ -8,7 +8,7 @@
       </div>
       <q-btn color="primary" unelevated no-caps icon="add" :label="$t('orders.new')" to="/servisi/novo" />
     </div>
-    <div class="stats">
+    <div v-if="session.user.admin" class="stats">
       <SummaryCard
         v-for="stat in stats"
         :key="stat.value"
@@ -23,6 +23,7 @@
     <RelatedRecordsBar :customer-id="customerId" :customer-name="customerName" :equipment-id="equipmentId" :equipment="selectedEquipment" />
     <q-card flat bordered>
       <q-tabs
+        v-if="session.user.admin"
         v-model="filter"
         align="left"
         active-color="primary"
@@ -32,10 +33,10 @@
         mobile-arrows>
         <q-tab name="all" :label="$t('orders.all') + ' (' + scopedRows.length + ')'" />
         <q-tab
-          v-for="s in statuses"
+          v-for="s in filters"
           :key="s.value"
           :name="s.value"
-          :label="$t(s.label) + ' (' + scopedRows.filter(r => r.status === s.value).length + ')'" />
+          :label="$t(s.label) + ' (' + scopedRows.filter(s.match).length + ')'" />
       </q-tabs>
       <q-table
         flat
@@ -48,7 +49,7 @@
         @row-click="openOrder">
         <template #top>
           <div class="row items-center full-width q-gutter-sm">
-            <q-input outlined dense v-model="search" :placeholder="$t('orders.search')" class="search-field" clearable>
+            <q-input outlined dense v-model="search" :placeholder="$t(session.user.admin ? 'orders.search' : 'orders.searchOwn')" class="search-field" clearable>
               <template #prepend><q-icon name="search" size="20px" /></template>
             </q-input>
             <q-space />
@@ -159,7 +160,13 @@
   const customerName = computed(() => scopeCustomers.value.find(row => sameId(row.id, customerId.value))?.name || rows.value.find(row => sameId(row.customer_id, customerId.value))?.customer_name || '')
   const selectedEquipment = computed(() => scopeEquipment.value.find(row => sameId(row.id, equipmentId.value)) || null)
   const scopedRows = computed(() => rows.value.filter(row => (!customerId.value || sameId(row.customer_id, customerId.value)) && (!equipmentId.value || equipmentIds(row).some(id => sameId(id, equipmentId.value)))))
-  const filtered = computed(() => scopedRows.value.filter(r => filter.value === 'all' || r.status === filter.value))
+  // "Closed" is not a status: a performed service whose finances are marked complete.
+  const isClosed = r => r.status === 'completed' && Number(r.finance_complete) === 1
+  const filters = statuses.flatMap(s => s.value === 'completed'
+    ? [{ ...s, match: r => r.status === 'completed' && !isClosed(r) }, { value: 'closed', label: 'statuses.closed', match: isClosed }]
+    : [{ ...s, match: r => r.status === s.value }])
+  const matchers = Object.fromEntries(filters.map(f => [f.value, f.match]))
+  const filtered = computed(() => scopedRows.value.filter(r => !session.user.admin || filter.value === 'all' || matchers[filter.value]?.(r)))
   const stats = computed(() => [
     { value: 'all', label: 'orders.all', icon: 'inventory_2', color: 'bg-light-blue-1 text-primary', count: scopedRows.value.length },
     {
@@ -181,7 +188,7 @@
       label: 'statuses.completedServices',
       icon: 'task_alt',
       color: 'bg-light-blue-1 text-primary',
-      count: scopedRows.value.filter(r => r.status === 'completed').length
+      count: scopedRows.value.filter(matchers.completed).length
     }
   ])
   function openOrder(event, row) {
