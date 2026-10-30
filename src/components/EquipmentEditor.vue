@@ -35,6 +35,13 @@
             v-model="form.serial"
             :label="$t('equipment.serial') + (session.user.admin ? '' : ' *')"
             :rules="session.user.admin ? [] : [required]" />
+          <q-input
+            outlined
+            dense
+            type="date"
+            v-model="form.first_use"
+            :label="$t('equipment.firstUse')"
+            stack-label />
           <CustomerSelect
             v-if="session.user.admin"
             outlined
@@ -47,16 +54,12 @@
             class="wide" />
           <div class="wide">
             <q-separator class="q-my-sm" />
-            <h2 class="q-mt-md">{{ $t('equipment.technicalDetails') }}</h2>
+            <h2 class="q-mt-md">{{ $t('equipment.externalInspection') }}</h2>
+            <div v-if="form.service_inspected_at" class="text-body2 q-mt-sm">
+              {{ $t('equipment.serviceInspection', { date: date(form.service_inspected_at), valid: date(form.service_valid_until) || '—', order: orderNumber(form.service_inspection_order_id) }) }}
+            </div>
+            <div class="text-caption text-grey-6 q-mt-xs">{{ $t('equipment.externalInspectionHint') }}</div>
           </div>
-          <q-input
-            outlined
-            dense
-            type="date"
-            v-model="form.first_use"
-            :label="$t('equipment.firstUse')"
-            stack-label
-            class="wide" />
           <q-input
             outlined
             dense
@@ -95,7 +98,7 @@
 <script setup>
   import CustomerSelect from './CustomerSelect.vue'
   import { reactive, ref, watch } from 'vue'
-  import { api, equipmentTypes, session } from '../services/api'
+  import { api, date, equipmentTypes, orderNumber, session } from '../services/api'
   import { t, translateText } from '../i18n'
   import ErrorBanner from './ErrorBanner.vue'
   import EquipmentModelFields from './EquipmentModelFields.vue'
@@ -134,7 +137,7 @@
   function setExpiry(value) {
     if (!value) return
     const d = new Date(value + 'T12:00:00')
-    d.setFullYear(d.getFullYear() + 1)
+    d.setFullYear(d.getFullYear() + 2)
     form.valid_until = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   }
   async function save() {

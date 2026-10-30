@@ -27,6 +27,14 @@
           icon="receipt_long"
           :label="$t('orders.fullOrder')"
           :to="'/servisi/' + form.id" />
+        <q-btn
+          v-if="!session.user?.admin && form.pay_token && !loading && !loadError"
+          unelevated
+          no-caps
+          color="primary"
+          icon="payments"
+          :label="$t('pay.payNow', { amount: money(form.outstanding) })"
+          :to="'/placilo/' + form.pay_token" />
       </div>
     </div>
     <ErrorBanner :message="loadError" retry @retry="load" />
@@ -288,6 +296,11 @@
                 emit-value
                 map-options
                 :label="$t('orders.status')" />
+              <q-checkbox
+                v-if="!isNew && form.status === 'completed' && savedStatus !== 'completed' && savedCustomer"
+                v-model="notifyCompletion"
+                :label="$t('pay.notifyCompletion')"
+                class="q-mt-sm" />
               <q-input
                 outlined
                 v-model="submittedDate"
@@ -420,6 +433,28 @@
                 </div>
                 <q-btn v-if="session.user?.admin && savedEquipmentOptions.some(option => Number(option.value) === Number(item.id))" flat dense no-caps :icon="item.type === 'Jadralno padalo' ? 'straighten' : 'assignment_turned_in'" color="primary" class="q-mt-sm" :label="$t(item.type === 'Jadralno padalo' ? 'inspection.title' : item.type === 'Reševalno padalo' ? 'certificate.reserveTitle' : 'certificate.generalTitle')" :to="`/servisi/${form.id}/meritve/${item.id}`" />
                 <q-btn v-if="session.user?.admin && item.type === 'Jadralno padalo' && savedEquipmentOptions.some(option => Number(option.value) === Number(item.id))" flat dense no-caps icon="table_view" color="primary" class="q-mt-sm" :label="$t('inspection.importTitle')" @click="inspectionImportEquipment = item" />
+                <div v-if="session.user?.admin" class="inspection-dates q-mt-sm">
+                  <q-input
+                    outlined
+                    dense
+                    type="date"
+                    stack-label
+                    :label="$t('equipment.inspectionDate')"
+                    :model-value="inspectionDates[item.id]?.inspected_at || ''"
+                    @update:model-value="value => setInspectionDate(item.id, value)" />
+                  <q-input
+                    outlined
+                    dense
+                    type="date"
+                    stack-label
+                    :label="$t('equipment.inspectionValid')"
+                    :model-value="inspectionDates[item.id]?.valid_until || ''"
+                    :rules="[value => !value || !inspectionDates[item.id]?.inspected_at || value >= inspectionDates[item.id].inspected_at || t('errors.expiryBeforeInspection')]"
+                    @update:model-value="value => (inspectionEntry(item.id).valid_until = value || '')" />
+                </div>
+                <div v-else-if="inspectionDates[item.id]?.inspected_at" class="text-caption text-grey-7 q-mt-sm">
+                  {{ $t('equipment.serviceInspectionShort', { date: date(inspectionDates[item.id].inspected_at), valid: date(inspectionDates[item.id].valid_until) || '—' }) }}
+                </div>
               </div>
               <div>
                 <div class="text-caption text-grey-7 q-mb-sm">{{ $t('documents.reference') }}</div>
@@ -551,6 +586,45 @@
                 class="full-width q-mt-sm"
                 @click="createCebelcaInvoice" />
               <div class="text-caption text-grey-6 q-mt-sm">{{ $t(savedCustomer ? 'cebelca.hint' : 'cebelca.needsCustomer') }}</div>
+            </template>
+          </q-card>
+          <q-card v-if="session.user?.admin && !isNew" flat bordered class="section-card payment-panel">
+            <h2>{{ $t('pay.panel') }}</h2>
+            <div class="row justify-between q-mt-md">
+              <span class="text-grey-7">{{ $t('pay.outstanding') }}</span>
+              <strong>{{ money(form.outstanding) }}</strong>
+            </div>
+            <div class="row items-center no-wrap q-mt-sm">
+              <span class="text-grey-7 col">{{ $t('pay.link') }}</span>
+              <q-btn flat round dense icon="content_copy" :aria-label="$t('common.copy')" @click="copyPayLink"><q-tooltip>{{ $t('common.copy') }}</q-tooltip></q-btn>
+              <q-btn flat round dense icon="open_in_new" :aria-label="$t('pay.link')" :to="'/placilo/' + form.pay_token" target="_blank"><q-tooltip>{{ $t('pay.link') }}</q-tooltip></q-btn>
+            </div>
+            <div class="text-caption text-grey-7 q-mt-sm">
+              {{ form.completion_sent_at ? $t('pay.completionSent', { date: date(form.completion_sent_at) }) : $t('pay.completionNotSent') }}
+            </div>
+            <ErrorBanner :message="completionError" class="q-mt-sm" />
+            <q-btn
+              outline
+              no-caps
+              color="primary"
+              icon="forward_to_inbox"
+              :label="$t('pay.sendCompletion')"
+              :loading="sendingCompletion"
+              :disable="!savedCustomer"
+              class="full-width q-mt-sm"
+              @click="sendCompletion" />
+            <template v-if="form.online_payments?.length">
+              <div class="text-weight-medium q-mt-lg q-mb-sm">{{ $t('pay.online') }}</div>
+              <div v-for="payment in form.online_payments" :key="payment.id" class="row items-center no-wrap q-mb-xs online-payment">
+                <span class="col">
+                  {{ payment.provider === 'stripe' ? $t('pay.stripe') : 'PayPal' }} · {{ date(payment.paid_at || payment.created_at) }}
+                  <q-badge v-if="Number(payment.sandbox)" color="orange-1" text-color="orange-9" class="q-ml-xs">{{ $t('pay.sandbox') }}</q-badge>
+                </span>
+                <span class="q-mx-sm">{{ money(payment.amount) }}</span>
+                <q-badge :color="payment.status === 'paid' ? 'teal-1' : 'grey-2'" :text-color="payment.status === 'paid' ? 'primary' : 'grey-7'">
+                  {{ $t('pay.status' + payment.status.charAt(0).toUpperCase() + payment.status.slice(1)) }}
+                </q-badge>
+              </div>
             </template>
           </q-card>
           <q-card v-if="session.user?.admin && documents.length" flat bordered class="section-card">
@@ -746,7 +820,7 @@
   import { useRoute, useRouter } from 'vue-router'
   import { useQuasar } from 'quasar'
   import {
-    API_URL,
+    endpoint,
     api,
     date,
     deliveries,
@@ -779,6 +853,10 @@
   const form = reactive({
     id: null,
     restricted: false,
+    pay_token: null,
+    outstanding: 0,
+    online_payments: [],
+    completion_sent_at: null,
     cebelca_invoice_id: null,
     cebelca_invoice_at: null,
     submitted_date: new Date().toLocaleDateString('sv-SE'),
@@ -855,6 +933,10 @@
   const documentEditor = ref(false)
   const reportEquipmentId = ref(null)
   const savedEquipmentIds = ref([])
+  const savedStatus = ref(null),
+    notifyCompletion = ref(true),
+    sendingCompletion = ref(false),
+    completionError = ref('')
   const reportAssignments = reactive({})
   const inspectionImportEquipment = ref(null)
   const reportNumbers = reactive({})
@@ -928,6 +1010,19 @@
     update(() => {
       equipmentSearch.value = value
     })
+  }
+
+  // Inspection performed in this service, per equipment item; validity defaults to two years.
+  const inspectionDates = reactive({})
+  const inspectionEntry = id => (inspectionDates[id] ||= { inspected_at: '', valid_until: '' })
+  function setInspectionDate(id, value) {
+    const entry = inspectionEntry(id)
+    entry.inspected_at = value || ''
+    if (value && !entry.valid_until) {
+      const d = new Date(value + 'T12:00:00')
+      d.setFullYear(d.getFullYear() + 2)
+      entry.valid_until = d.toLocaleDateString('sv-SE')
+    }
   }
 
   function attachEquipment(id) {
@@ -1100,6 +1195,8 @@
         })
         customerId.value = order.customer_id ? Number(order.customer_id) : null
         savedEquipmentIds.value = [...form.equipment_ids]
+        savedStatus.value = order.status
+        notifyCompletion.value = true
         if (!session.user?.admin && order.equipment) equipment.value = order.equipment
         acceptedPrices.value = {}
         for (const item of order.items) {
@@ -1108,6 +1205,9 @@
         }
         documents.value = order.documents
         comments.value = order.comments || []
+        for (const key in inspectionDates) delete inspectionDates[key]
+        for (const item of order.equipment || [])
+          inspectionDates[item.id] = { inspected_at: item.inspection_date || '', valid_until: item.inspection_valid_until || '' }
         resetEmail()
       }
     } catch (e) {
@@ -1130,6 +1230,9 @@
     saveError.value = ''
     try {
       const payload = { ...form }
+      if (session.user?.admin) payload.notify_completion = notifyCompletion.value
+      if (session.user?.admin)
+        payload.equipment_inspections = Object.fromEntries(form.equipment_ids.filter(id => inspectionDates[id]).map(id => [id, inspectionDates[id]]))
       if (session.user?.admin) payload.customer_id = customerId.value
       if (publicMode) {
         payload.contact = {
@@ -1156,6 +1259,8 @@
       const r = await api(publicMode ? 'book' : 'saveorder', payload)
       q.notify({ type: 'positive', message: t('orders.saved') })
       if (!publicMode && r.access_sent === false) q.notify({ type: 'negative', message: t('errors.emailFailed') })
+      if (r.completion_sent === true) q.notify({ type: 'positive', message: t('pay.completionDone') })
+      if (r.completion_sent === false) q.notify({ type: 'negative', message: t('pay.completionFailed') })
       if (publicMode) {
         submitted.value = r.id
         form.confirmation_pending = !!r.confirmation_pending
@@ -1251,7 +1356,7 @@
   async function download(doc) {
     documentError.value = ''
     try {
-      const r = await fetch(`${API_URL}/servis/document/${doc.id}/`, { credentials: 'include' })
+      const r = await fetch(endpoint('document/' + doc.id), { credentials: 'include' })
       if (!r.ok) throw new Error(t('errors.downloadFailed'))
       const url = URL.createObjectURL(await r.blob()),
         a = document.createElement('a')
@@ -1339,6 +1444,28 @@
         creatingInvoice.value = false
       }
     })
+  }
+
+  async function sendCompletion() {
+    sendingCompletion.value = true
+    completionError.value = ''
+    try {
+      const r = await api('sendcompletion', { order_id: form.id })
+      Object.assign(form, { completion_sent_at: r.completion_sent_at, pay_token: r.pay_token })
+      q.notify({ type: 'positive', message: t('pay.completionDone') })
+    } catch (e) {
+      completionError.value = e.message
+    } finally {
+      sendingCompletion.value = false
+    }
+  }
+  async function copyPayLink() {
+    try {
+      await navigator.clipboard.writeText(location.origin + '/placilo/' + form.pay_token)
+      q.notify({ type: 'positive', message: t('pay.linkCopied') })
+    } catch (e) {
+      q.notify({ type: 'negative', message: e.message })
+    }
   }
 
   function removeOrder() {

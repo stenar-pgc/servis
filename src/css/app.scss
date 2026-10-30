@@ -235,6 +235,11 @@ a {
   position: sticky;
   top: 92px;
 }
+.inspection-dates {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
 .service-item {
   border: 1px solid #cfe6ee;
   border-radius: 8px;

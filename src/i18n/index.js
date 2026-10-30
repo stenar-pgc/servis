@@ -3,7 +3,10 @@ import en from './en'
 import sl from './sl'
 
 let language = 'sl'
+// Whether the visitor chose a language before; pages may otherwise follow the customer's language.
+export let languageChosen = false
 try {
+  languageChosen = !!localStorage.getItem('stenar-language')
   language = localStorage.getItem('stenar-language') === 'en' ? 'en' : 'sl'
 } catch {}
 

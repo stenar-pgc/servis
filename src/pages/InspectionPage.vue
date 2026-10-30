@@ -32,7 +32,7 @@
 import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import { useRoute, onBeforeRouteLeave } from 'vue-router'
-import { api, API_URL, date as formatDate } from '../services/api'
+import { api, endpoint, date as formatDate } from '../services/api'
 import ErrorBanner from '../components/ErrorBanner.vue'
 import InspectionEditor from '../components/InspectionEditor.vue'
 import template from '../assets/inspection-template.json'
@@ -65,7 +65,7 @@ async function pdf(publish) {
  const timeout=setTimeout(()=>{timedOut=true;request.abort()},90000)
  rendering.value = true; error.value = ''
  try {
-  const response = await fetch(`${API_URL}/servis/inspectionpdf/`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, signal: request.signal, body: JSON.stringify({ order_id: Number(route.params.id), equipment_id: Number(route.params.equipmentId), revision: inspection.value.revision, report_sheet: reportSheet.value, publish }) })
+  const response = await fetch(endpoint('inspectionpdf'), { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, signal: request.signal, body: JSON.stringify({ order_id: Number(route.params.id), equipment_id: Number(route.params.equipmentId), revision: inspection.value.revision, report_sheet: reportSheet.value, publish }) })
   const result = await response.json(); if (!response.ok || result.error) throw new Error(result.error ? translateText(result.error) : t('errors.connection'))
   if(request.signal.aborted || pdfRequest!==request)return
   if (publish) {
@@ -96,7 +96,7 @@ async function load() {
 
  } catch(e) { error.value = e.message } finally { loading.value = false }
 }
-async function download(file){try{const response=await fetch(`${API_URL}/servis/document/${file.id}/`,{credentials:'include'});if(!response.ok)throw new Error(t('errors.downloadFailed'));const url=URL.createObjectURL(await response.blob()),a=document.createElement('a');a.href=url;a.download=file.filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}catch(e){error.value=e.message}}
+async function download(file){try{const response=await fetch(endpoint('document/' + file.id),{credentials:'include'});if(!response.ok)throw new Error(t('errors.downloadFailed'));const url=URL.createObjectURL(await response.blob()),a=document.createElement('a');a.href=url;a.download=file.filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}catch(e){error.value=e.message}}
 onMounted(() => { window.addEventListener('beforeunload', unload); load() })
 </script>
 

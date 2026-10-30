@@ -20,7 +20,7 @@
 </template>
 <script setup>
   import { onBeforeUnmount, ref, watch } from 'vue'
-  import { API_URL } from '../services/api'
+  import { endpoint } from '../services/api'
   import { t } from '../i18n'
   import ErrorBanner from './ErrorBanner.vue'
 
@@ -44,7 +44,7 @@
     loading.value = true
     error.value = ''
     try {
-      const response = await fetch(`${API_URL}/servis/document/${props.file.id}/`, {
+      const response = await fetch(endpoint('document/' + props.file.id), {
         credentials: 'include',
         signal: request.signal
       })

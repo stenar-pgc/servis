@@ -6,8 +6,20 @@ export const API_URL = 'https://app.niceclouds.si'
 export const session = reactive({ user: null, ready: false, error: '' })
 let restoring
 
+// Backend actions are split across the /servis* controllers; unlisted actions are served by /servis.
+const controllers = {
+  servis_accounts: 'me login register requestaccess confirmorder access sendaccess revokeaccess accountmigration linkcustomer reset resend activate logout customers customerdeletion deletecustomer savecustomer',
+  servis_partners: 'agencies saveagency deleteagency discounts savediscount deletediscount payments savepayment deletepayment commissions',
+  servis_inspections: 'inspection inspectionimport saveinspection deleteinspection inspectionartwork inspectionpdf',
+  servis_payments: 'cebelcainvoice paymentinfo paymentstatus sendcompletion stripe paypal'
+}
+const controllerOf = Object.fromEntries(
+  Object.entries(controllers).flatMap(([controller, actions]) => actions.split(' ').map(action => [action, controller]))
+)
+export const endpoint = action => `${API_URL}/${controllerOf[action.split('/')[0]] || 'servis'}/${action}/`
+
 export async function api(action, data) {
-  const response = await fetch(`${API_URL}/servis/${action}/`, {
+  const response = await fetch(endpoint(action), {
     method: data === undefined ? 'GET' : 'POST',
     credentials: 'include',
     headers: data === undefined ? {} : { 'Content-Type': 'application/json' },

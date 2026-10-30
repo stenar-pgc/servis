@@ -118,9 +118,9 @@
         <q-td :props="p">
           <q-badge
             rounded
-            :color="inspectionState(p.row.valid_until).color"
-            :text-color="inspectionState(p.row.valid_until).text">
-            {{ $t(inspectionState(p.row.valid_until).label) }}
+            :color="inspectionState(p.row.inspection_valid_until).color"
+            :text-color="inspectionState(p.row.inspection_valid_until).text">
+            {{ $t(inspectionState(p.row.inspection_valid_until).label) }}
           </q-badge>
         </q-td>
       </template>
@@ -181,8 +181,8 @@
       align: 'left'
     },
     { name: 'serial', field: 'serial', label: t('equipment.serial'), align: 'left' },
-    { name: 'valid', field: r => date(r.valid_until), label: t('equipment.nextInspection'), align: 'left' },
-    { name: 'validity', field: 'valid_until', label: t('equipment.validity'), align: 'left' }
+    { name: 'valid', field: r => date(r.inspection_valid_until), label: t('equipment.nextInspection'), align: 'left' },
+    { name: 'validity', field: 'inspection_valid_until', label: t('equipment.validity'), align: 'left' }
   ])
   const orderColumns = computed(() => [
     { name: 'id', field: r => orderNumber(r.id), label: t('orders.order'), align: 'left' },

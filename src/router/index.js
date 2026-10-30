@@ -45,6 +45,12 @@ export default defineRouter(() => {
         children: [{ path: '', component: () => import('../pages/RegistrationPage.vue') }]
       },
       {
+        path: '/placilo/:token?',
+        component: () => import('../layouts/PublicLayout.vue'),
+        meta: { public: true },
+        children: [{ path: '', component: () => import('../pages/PaymentPage.vue') }]
+      },
+      {
         path: '/narocilo',
         component: () => import('../layouts/PublicLayout.vue'),
         meta: { public: true },

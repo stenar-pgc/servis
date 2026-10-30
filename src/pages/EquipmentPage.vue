@@ -41,13 +41,13 @@
       </template>
       <template #body-cell-valid="p">
         <q-td :props="p">
-          <div>{{ date(p.row.valid_until) }}</div>
+          <div>{{ date(p.row.inspection_valid_until) }}</div>
           <q-badge
-            v-if="p.row.valid_until"
+            v-if="p.row.inspection_valid_until"
             rounded
-            :color="inspectionState(p.row.valid_until).color"
-            :text-color="inspectionState(p.row.valid_until).text">
-            {{ $t(inspectionState(p.row.valid_until).label) }}
+            :color="inspectionState(p.row.inspection_valid_until).color"
+            :text-color="inspectionState(p.row.inspection_valid_until).text">
+            {{ $t(inspectionState(p.row.inspection_valid_until).label) }}
           </q-badge>
         </q-td>
       </template>
@@ -143,7 +143,7 @@
       : []),
     {
       name: 'valid',
-      field: 'valid_until',
+      field: 'inspection_valid_until',
       label: t('equipment.nextInspection'),
       align: 'left',
       sortable: true
