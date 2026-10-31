@@ -253,7 +253,12 @@ export default {
     title: 'Equipment',
     nextInspection: 'Next inspection',
     add: 'Add new equipment',
-    addExisting: 'Add existing equipment',
+    addToOrder: 'Add equipment',
+    searchExisting: 'Search the register (serial no., model or owner)',
+    searchHint: 'First check whether the equipment is already registered. If not, enter it below.',
+    possibleMatches: 'This equipment may already be registered:',
+    notInRegister: 'No matches in the register. Enter new equipment below.',
+    useExisting: 'Add',
     removeFromOrder: 'Remove from service order',
     saveForReport: 'Save the order before uploading a report for this item.'
   },
@@ -762,6 +767,43 @@ export default {
     empty: 'No comments yet.',
     placeholder: 'Write a comment for your colleagues …',
     post: 'Post comment'
+  },
+  import: {
+    dropTitle: 'Upload measurements and reports',
+    dropHint: 'Measurement workbooks (XLSX) and PDF reports or certificates. Equipment is read from the files: existing items are linked, new ones are created. Review everything before importing.',
+    saveFirst: 'Save the service, then upload measurements and reports.',
+    choose: 'Choose files',
+    addFiles: 'Add files',
+    title: 'Import measurements and reports',
+    reading: 'Reading files {done}/{total} …',
+    unknown: 'Unrecognized equipment',
+    target: 'Equipment',
+    createNew: 'Create new equipment',
+    skip: 'Do not import',
+    fills: 'Fills empty fields: {fields}',
+    difference: '{field}: {current} in the register, {incoming} in the file. The register value is kept.',
+    duplicate: 'Already uploaded',
+    done: 'Imported',
+    empty: 'No files to import.',
+    confirm: 'Import ({count})',
+    invalidFile: 'Upload an XLSX or PDF file up to 10 MB.',
+    identityRequired: 'Enter the equipment manufacturer or model.',
+    serialExists: 'Equipment with this serial number already exists. Choose it from the list.',
+    checkAgain: 'Check the file again before importing.',
+    finished: 'Measurements and reports imported.',
+    kind: {
+      workbook: 'Measurements (Excel)',
+      reserve: 'Reserve parachute certificate',
+      report: 'Report (PDF)'
+    },
+    status: {
+      serial: 'In register (serial no.)',
+      order: 'On this service',
+      customer: "Customer's equipment",
+      chosen: 'Existing equipment',
+      new: 'New equipment',
+      skip: 'Not imported'
+    }
   },
   catalog: {
     basic: 'Inspection up to EN-B',

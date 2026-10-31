@@ -252,7 +252,12 @@ export default {
     title: 'Oprema',
     nextInspection: 'Naslednji pregled',
     add: 'Dodaj novo opremo',
-    addExisting: 'Dodaj obstoječo opremo',
+    addToOrder: 'Dodaj opremo',
+    searchExisting: 'Poišči v bazi (serijska št., model ali lastnik)',
+    searchHint: 'Najprej preverite, ali je oprema že v bazi. Če je ni, jo vnesite spodaj.',
+    possibleMatches: 'Ta oprema je morda že v bazi:',
+    notInRegister: 'V bazi ni zadetkov. Vnesite novo opremo spodaj.',
+    useExisting: 'Dodaj',
     removeFromOrder: 'Odstrani iz servisa',
     saveForReport: 'Shranite servis, da lahko za ta kos naložite poročilo.'
   },
@@ -761,6 +766,43 @@ export default {
     empty: 'Za zdaj ni komentarjev.',
     placeholder: 'Napišite komentar sodelavcem …',
     post: 'Objavi komentar'
+  },
+  import: {
+    dropTitle: 'Naložite meritve in poročila',
+    dropHint: 'Excel z meritvami (XLSX) ter PDF poročila in potrdila. Oprema se prebere iz datotek: obstoječa se poveže, nova se ustvari. Pred uvozom vse preverite.',
+    saveFirst: 'Shranite servis, nato naložite meritve in poročila.',
+    choose: 'Izberite datoteke',
+    addFiles: 'Dodaj datoteke',
+    title: 'Uvoz meritev in poročil',
+    reading: 'Branje datotek {done}/{total} …',
+    unknown: 'Neprepoznana oprema',
+    target: 'Oprema',
+    createNew: 'Ustvari novo opremo',
+    skip: 'Ne uvozi',
+    fills: 'Dopolni prazna polja: {fields}',
+    difference: '{field}: v bazi {current}, v datoteki {incoming}. Podatek v bazi ostane.',
+    duplicate: 'Že naloženo',
+    done: 'Uvoženo',
+    empty: 'Ni datotek za uvoz.',
+    confirm: 'Uvozi ({count})',
+    invalidFile: 'Naložite datoteko XLSX ali PDF do 10 MB.',
+    identityRequired: 'Vnesite proizvajalca ali model opreme.',
+    serialExists: 'Oprema s to serijsko številko že obstaja. Izberite jo s seznama.',
+    checkAgain: 'Ponovno preverite datoteko pred uvozom.',
+    finished: 'Meritve in poročila so uvoženi.',
+    kind: {
+      workbook: 'Meritve (Excel)',
+      reserve: 'Potrdilo reševalnega padala',
+      report: 'Poročilo (PDF)'
+    },
+    status: {
+      serial: 'V bazi (serijska št.)',
+      order: 'Na tem servisu',
+      customer: 'Oprema stranke',
+      chosen: 'Obstoječa oprema',
+      new: 'Nova oprema',
+      skip: 'Ne uvozi'
+    }
   },
   catalog: {
     basic: 'Tehnični pregled do EN-B',

@@ -3,11 +3,34 @@
     <q-card class="editor">
       <q-form @submit="save">
         <q-card-section class="row items-center">
-          <h2>{{ $t(form.id ? 'equipment.edit' : 'equipment.new') }}</h2>
+          <h2>{{ $t(form.id ? 'equipment.edit' : existing ? 'equipment.addToOrder' : 'equipment.new') }}</h2>
           <q-space />
           <q-btn flat round dense icon="close" v-close-popup :aria-label="$t('common.close')" />
         </q-card-section>
         <q-separator />
+        <q-card-section v-if="existing && !form.id">
+          <q-input outlined dense clearable autofocus v-model="search" :label="$t('equipment.searchExisting')">
+            <template #prepend><q-icon name="search" /></template>
+          </q-input>
+          <div v-if="matches.length && !search" class="text-caption text-grey-7 q-mt-sm">{{ $t('equipment.possibleMatches') }}</div>
+          <q-list v-if="matches.length" bordered separator class="rounded-borders q-mt-sm">
+            <q-item v-for="item in matches" :key="item.id" clickable @click="choose(item)">
+              <q-item-section>
+                <q-item-label>{{ equipmentName(item) || translateText(item.type) }}</q-item-label>
+                <q-item-label caption>
+                  {{ translateText(item.type) }} · {{ item.serial || '—' }} · {{ item.customer_name || $t('equipment.noOwner') }}
+                </q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-btn flat dense no-caps color="primary" icon="add" :label="$t('equipment.useExisting')" tabindex="-1" />
+              </q-item-section>
+            </q-item>
+          </q-list>
+          <div v-else class="text-caption text-grey-7 q-mt-sm">
+            {{ $t(search ? 'equipment.notInRegister' : 'equipment.searchHint') }}
+          </div>
+        </q-card-section>
+        <q-separator v-if="existing && !form.id" />
         <q-card-section class="form-grid">
           <q-select
             outlined
@@ -97,21 +120,32 @@
 </template>
 <script setup>
   import CustomerSelect from './CustomerSelect.vue'
-  import { reactive, ref, watch } from 'vue'
+  import { computed, reactive, ref, watch } from 'vue'
   import { api, date, equipmentTypes, orderNumber, session } from '../services/api'
   import { t, translateText } from '../i18n'
+  import { equipmentName, searchEquipment, similarEquipment } from '../services/equipment-match'
   import ErrorBanner from './ErrorBanner.vue'
   import EquipmentModelFields from './EquipmentModelFields.vue'
   const open = defineModel({ type: Boolean }),
     props = defineProps({
       equipment: Object,
       customerId: [Number, String],
-      customers: { type: Array, default: () => [] }
+      customers: { type: Array, default: () => [] },
+      // Register items that can be chosen instead of entering a new one (adding equipment to a service).
+      existing: { type: Array, default: null }
     }),
-    emit = defineEmits(['saved'])
+    emit = defineEmits(['saved', 'select'])
   const form = reactive({}),
     saving = ref(false),
-    error = ref('')
+    error = ref(''),
+    search = ref('')
+  const matches = computed(() =>
+    search.value ? searchEquipment(search.value, props.existing) : similarEquipment(form, props.existing || [])
+  )
+  function choose(item) {
+    open.value = false
+    emit('select', item.id)
+  }
   const required = value => !!value || t('validation.required')
   watch(open, value => {
     if (value) {
@@ -132,6 +166,7 @@
         props.equipment || {}
       )
       error.value = ''
+      search.value = ''
     }
   })
   function setExpiry(value) {

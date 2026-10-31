@@ -371,31 +371,19 @@
             class="section-card equipment-reports-card">
             <h2 class="q-mb-lg">{{ $t('documents.equipmentReports') }} ({{ orderEquipment.length }})</h2>
             <div v-if="session.user?.admin" class="q-mb-lg">
-              <q-select
-                ref="equipmentSelect"
-                v-model="equipmentToAdd"
-                outlined
-                use-input
-                clearable
-                :input-debounce="0"
-                :options="filteredEquipmentOptions"
-                emit-value
-                map-options
-                :label="$t('equipment.addExisting')"
-                @filter="filterEquipment"
-                @update:model-value="attachEquipment">
-                <template #no-option>
-                  <q-item>
-                    <q-item-section>{{ $t('common.noResults') }}</q-item-section>
-                  </q-item>
-                </template>
-              </q-select>
+              <ReportImport
+                :order-id="form.id"
+                :equipment="equipment"
+                :order-equipment-ids="form.equipment_ids"
+                :customer-id="customerId"
+                :disabled="isNew"
+                @imported="reportsImported" />
               <q-btn
                 outline
                 no-caps
                 color="primary"
                 icon="add"
-                :label="$t('equipment.new')"
+                :label="$t('equipment.addToOrder')"
                 class="q-mt-md"
                 @click="addEquipment" />
             </div>
@@ -510,15 +498,6 @@
                 </template>
               </div>
             </div>
-            <q-btn
-              v-if="session.user?.admin"
-              flat
-              no-caps
-              color="primary"
-              icon="add_circle_outline"
-              :label="$t('equipment.addExisting')"
-              class="q-mb-md"
-              @click="chooseEquipment" />
             <template v-if="unassignedReports.length">
               <h3 class="text-subtitle1">{{ $t('documents.unassignedReports') }}</h3>
               <div v-for="doc in unassignedReports" :key="doc.id" class="q-mb-md">
@@ -812,6 +791,8 @@
       :customers="customers"
       :equipment="equipmentToEdit"
       :customer-id="newCustomer ? null : customerId"
+      :existing="session.user?.admin ? unattachedEquipment : null"
+      @select="attachEquipment"
       @saved="equipmentSaved" />
   </q-page>
 </template>
@@ -838,6 +819,7 @@
   import ErrorBanner from '../components/ErrorBanner.vue'
   import EquipmentEditor from '../components/EquipmentEditor.vue'
   import InspectionImportDialog from '../components/InspectionImportDialog.vue'
+  import ReportImport from '../components/ReportImport.vue'
   import DocumentFiles from '../components/DocumentFiles.vue'
   import StatusBadge from '../components/StatusBadge.vue'
   import ServiceSelector from '../components/ServiceSelector.vue'
@@ -929,7 +911,6 @@
   const review = ref(false)
   const agencies = ref([])
   const discounts = ref([])
-  const equipmentToAdd = ref(null)
   const documentEditor = ref(false)
   const reportEquipmentId = ref(null)
   const savedEquipmentIds = ref([])
@@ -992,25 +973,7 @@
   })
   const emailError = ref(''),
     sending = ref(false)
-  const equipmentOptions = computed(() =>
-    equipment.value
-      .filter(e => !form.equipment_ids.includes(Number(e.id)))
-      .map(e => ({
-        value: Number(e.id),
-        label: `${e.manufacturer} ${e.model} ${e.size} · ${e.serial || ''}${session.user?.admin ? ' · ' + (e.customer_name || t('equipment.noOwner')) : ''}`
-      }))
-  )
-  const equipmentSelect = ref(null)
-  const equipmentSearch = ref('')
-  const filteredEquipmentOptions = computed(() =>
-    equipmentOptions.value.filter(option => option.label.toLowerCase().includes(equipmentSearch.value.toLowerCase()))
-  )
-
-  function filterEquipment(value, update) {
-    update(() => {
-      equipmentSearch.value = value
-    })
-  }
+  const unattachedEquipment = computed(() => equipment.value.filter(e => !form.equipment_ids.includes(Number(e.id))))
 
   // Inspection performed in this service, per equipment item; validity defaults to two years.
   const inspectionDates = reactive({})
@@ -1030,24 +993,32 @@
     const item = equipment.value.find(item => Number(item.id) === Number(id))
     if (!newCustomer.value && !customerId.value && item?.customer_id) customerId.value = Number(item.customer_id)
     form.equipment_ids = [...new Set([...form.equipment_ids, Number(id)])]
-    equipmentToAdd.value = null
-    equipmentSearch.value = ''
   }
 
   function detachEquipment(id) {
     form.equipment_ids = form.equipment_ids.filter(value => Number(value) !== Number(id))
   }
 
-  function chooseEquipment() {
-    equipmentSelect.value?.$el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    equipmentSelect.value?.focus()
-    equipmentSelect.value?.showPopup()
-  }
-
   function addEquipment() {
     equipmentToEdit.value = null
-    equipmentSelect.value?.hidePopup()
     equipmentEditor.value = true
+  }
+
+  // Imported files link equipment on the server; keep unsaved form edits and merge in the new links, reports and dates.
+  async function reportsImported(ids) {
+    try {
+      const [list, order] = await Promise.all([api('equipment'), api('order/' + form.id)])
+      equipment.value = list
+      const linked = (order.equipment_ids || []).map(Number)
+      form.equipment_ids = [...new Set([...form.equipment_ids, ...linked])]
+      savedEquipmentIds.value = [...new Set([...savedEquipmentIds.value, ...linked])]
+      documents.value = order.documents
+      for (const item of order.equipment || [])
+        if (ids.includes(Number(item.id)) || !inspectionDates[item.id]?.inspected_at)
+          inspectionDates[item.id] = { inspected_at: item.inspection_date || '', valid_until: item.inspection_valid_until || '' }
+    } catch (e) {
+      documentError.value = e.message
+    }
   }
 
   function editEquipment(item) {
@@ -1290,7 +1261,6 @@
   async function equipmentSaved(id) {
     try {
       equipment.value = await api('equipment')
-      equipmentSearch.value = ''
       attachEquipment(id)
     } catch (e) {
       saveError.value = e.message
